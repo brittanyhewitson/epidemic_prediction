@@ -14,7 +14,7 @@ conda create -n epidemic_prediction python=3.5
 conda activate epidemic_prediction
 ```
 
-Alternatively, you can use virtualenv:
+Alternatively, you can use venv:
 ```
 python3 -m venv venv
 source venv/bin/activate
@@ -26,4 +26,6 @@ pip install -r requirements.txt
 ```
 
 Finally, run the setup file:
+```
 python3 setup.py develop
+```

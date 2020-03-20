@@ -85,7 +85,7 @@ def main():
         test_size=0.2
     )
     
-    simple_classifier = build_classifier(X_train)
+    simple_classifier = build_simple_classifier(X_train)
     classifier_results = model_predict(
                 'simple_classifier',
                 simple_classifier,

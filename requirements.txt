@@ -2,3 +2,8 @@ pandas
 notebook
 jupyter_contrib_nbextensions
 jupyter_nbextensions_configurator
+keras
+tensorflow
+matplotlib
+dill
+scikit-learn

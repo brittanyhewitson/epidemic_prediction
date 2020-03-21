@@ -10,18 +10,19 @@ from keras.optimizers import SGD
 # Import scikit-learn helpers
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, accuracy_score
+from sklearn import svm
 
 # Set the random seed for splitting data
 RAND_SEED = 42
 
 
-def model_predict(model_name, model, X_train, y_train, X_test, y_test):
+def model_predict(model_name, model, X_train, y_train, X_test, y_test, **kwargs):
     """
     """
-    # Add timing stuff here
+    # TODO: Add timing stuff here
 
     # Fit the model
-    model.fit(X_train, y_train, batch_size=1, epochs=10, verbose=0)
+    model.fit(X_train, y_train, **kwargs)
 
     # Test the model
     outputs = model.predict(X_test)
@@ -32,6 +33,7 @@ def model_predict(model_name, model, X_train, y_train, X_test, y_test):
     accuracy = accuracy_score(y_test, outputs)
 
     metrics = {
+        "name": model_name,
         "confusion_matrix": cm,
         'accuracy': accuracy
     }
@@ -42,7 +44,7 @@ def build_simple_classifier(X_train):
     """
     """
     model = Sequential()
-    model.add(Dense(12, input_dim=24, activation='relu'))
+    model.add(Dense(12, input_dim=X_train.shape[1], activation='relu'))
     model.add(Dense(12, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -54,7 +56,7 @@ def build_simple_rnn(X_train):
     TODO after we figure out data
     """
     model = Sequential()
-    model.add(SimpleRNN(10, input_shape=(None, 1), return_sequences=False))
+    model.add(SimpleRNN(10, input_shape=(None, 24), return_sequences=False))
     model.add(Dense(1))
     model.compile(loss='mean_squared_error', optimizer='adam')
     return model
@@ -85,6 +87,7 @@ def main():
         test_size=0.2
     )
     
+    # Simple classifier
     simple_classifier = build_simple_classifier(X_train)
     classifier_results = model_predict(
                 'simple_classifier',
@@ -92,13 +95,22 @@ def main():
                 X_train,
                 y_train,
                 X_test,
-                y_test
+                y_test,
+                batch_size=1,
+                epochs=10,
             )
 
-
-    # Build SGD
-
-    # Build perceptron
+    # SVM
+    svm_classifier = svm.SVC()
+    svm_results = model_predict(
+                'svm',
+                svm_classifier,
+                X_train,
+                y_train,
+                X_test,
+                y_test
+            )
+    # Build SGD?
 
     # Build Simple RNN
     # TODO: Need to understand data better before we use RNN, since the data isn't organized
@@ -110,8 +122,20 @@ def main():
     # Build LSTM
     #model = build_lstm()
 
+    # Display results
+    print("------------------------------------------------")
+    print("------------------------------------------------")
+    print("RESULTS")
+    print("------------------------------------------------")
+    print("------------------------------------------------")
+    print("SIMPLE CLASSIFIER:")
     print(classifier_results["confusion_matrix"])
-    print(classifier_results["accuracy"])
+    print("accuracy: {}".format(classifier_results["accuracy"]))
+    print("------------------------------------------------")
+    print("------------------------------------------------")
+    print("SVM:")
+    print(svm_results["confusion_matrix"])
+    print("accuracy: {}".format(svm_results["accuracy"]))
     
 
 if __name__=='__main__':

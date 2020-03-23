@@ -11,6 +11,8 @@ from keras.optimizers import SGD
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, accuracy_score
 from sklearn import svm
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import cross_val_score
 
 # Set the random seed for splitting data
 RAND_SEED = 42
@@ -110,7 +112,20 @@ def main():
                 X_test,
                 y_test
             )
-    # Build SGD?
+
+    # KNN
+    knn_classifier = KNeighborsClassifier(n_neighbors = 1)
+    #knn_score=cross_val_score(knn_classifier,X,y,cv=10)
+    knn_results = model_predict(
+                'knn',
+                knn_classifier,
+                X_train,
+                y_train,
+                X_test,
+                y_test
+            )   
+    
+	# Build SGD?
 
     # Build Simple RNN
     # TODO: Need to understand data better before we use RNN, since the data isn't organized
@@ -133,9 +148,14 @@ def main():
     print("accuracy: {}".format(classifier_results["accuracy"]))
     print("------------------------------------------------")
     print("------------------------------------------------")
-    print("SVM:")
+    print("SVM:")	
     print(svm_results["confusion_matrix"])
     print("accuracy: {}".format(svm_results["accuracy"]))
+    print("------------------------------------------------")
+    print("------------------------------------------------")
+    print("KNN:")
+    print(knn_results["confusion_matrix"])
+    print("accuracy: {}".format(knn_results["accuracy"]))
     
 
 if __name__=='__main__':

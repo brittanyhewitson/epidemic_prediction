@@ -7,3 +7,4 @@ tensorflow
 matplotlib
 dill
 scikit-learn
+seaborn

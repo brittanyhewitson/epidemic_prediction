@@ -17,12 +17,14 @@ from sklearn.model_selection import cross_val_score
 # Set the random seed for splitting data
 RAND_SEED = 42
 
+from timeit import default_timer as timer
 
 def model_predict(model_name, model, X_train, y_train, X_test, y_test, **kwargs):
     """
     """
     # TODO: Add timing stuff here
-
+    #timer
+    
     # Fit the model
     model.fit(X_train, y_train, **kwargs)
 
@@ -88,7 +90,7 @@ def main():
         random_state=RAND_SEED,
         test_size=0.2
     )
-    
+    start_t = timer()
     # Simple classifier
     simple_classifier = build_simple_classifier(X_train)
     classifier_results = model_predict(
@@ -136,6 +138,8 @@ def main():
 
     # Build LSTM
     #model = build_lstm()
+    #stop timer and display
+    end_t = timer()
 
     # Display results
     print("------------------------------------------------")
@@ -156,6 +160,9 @@ def main():
     print("KNN:")
     print(knn_results["confusion_matrix"])
     print("accuracy: {}".format(knn_results["accuracy"]))
+    print("------------------------------------------------")
+    print("elapsed_timer = {} seconds".format(end_t-start_t))
+    print("------------------------------------------------")
     
 
 if __name__=='__main__':

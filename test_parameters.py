@@ -15,6 +15,7 @@ from visualize_data import (
     plot_simple_classifier_scatter,
     plot_simple_classifier_heatmap,
     plot_simple_classifier_bar,
+    plot_history,
     plot_knn_bar,
     plot_all_results,
 )
@@ -78,6 +79,7 @@ def test_simple_classifier(model, data, params):
                         model,
                         data,
                         verbose=False,
+                        validation_data=(data["X_test"], data["y_test"]),
                         **test_params,
                     )
             print("accuracy for {}: {}".format(test_params, classifier_results["accuracy"]))
@@ -116,8 +118,8 @@ def main(**kwargs):
     
     # Test the simple classifier parameters
     simple_params = {
-        "epochs": [1, 5, 10, 20, 50, 100],
-        "batch_size": [5, 10, 20, 50, 100]
+        "epochs": [1000],
+        "batch_size": [50]
     }
     simple_classifier = build_simple_classifier(data["X_train"])
     simple_classifier_results = test_simple_classifier(
@@ -144,6 +146,7 @@ def main(**kwargs):
     #plot_simple_classifier_scatter(simple_classifier_results)
     plot_simple_classifier_heatmap(simple_classifier_results, save_fig=True)
     #plot_simple_classifier_bar(simple_classifier_results)
+    plot_history(simple_classifier_results)
     
 
     # TODO: Add SVM later for big data and small data

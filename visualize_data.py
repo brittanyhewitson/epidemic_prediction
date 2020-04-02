@@ -264,6 +264,23 @@ def plot_simple_classifier_bar(results, save_fig=False):
         plt.clf()
 
 
+def plot_history(results):
+    """
+    """
+    for result in results:
+        history = result["history"]
+        #history.history['accuracy'][0] = 0.6
+        #history.history['val_accuracy'][0] = 0.55
+        plt.plot(range(1, (len(history.history['accuracy'])+1)), history.history['accuracy'])
+        plt.plot(range(1, (len(history.history['val_accuracy'])+1)), history.history['val_accuracy'])
+        #plt.ylim((0.5, 1.0))
+        plt.title('Model Accuracy for epochs={} batch_size={}'.format(result["params"]["epochs"], result["params"]["batch_size"]))
+        plt.ylabel('Accuracy')
+        plt.xlabel('Epoch')
+        plt.legend(['train', 'test'], loc='upper right')
+        plt.show()
+
+
 def plot_knn_bar(results, save_fig=False):
     """
     """

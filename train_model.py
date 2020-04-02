@@ -1,11 +1,20 @@
 #import click
 import dill
 import numpy as np
+import matplotlib.pyplot as plt
 
 # import models, layers, and optimizers from keras
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, SimpleRNN
+from keras.layers import LSTM, Dense, SimpleRNN, Dropout
 from keras.optimizers import SGD
+
+#import regularization tools
+from keras import regularizers
+from tensorflow import keras
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+callbacks = [EarlyStopping(monitor='val_loss', patience=2, verbose=1), 
+                               ModelCheckpoint('best_model_so_far.h5',
+                               monitor='val_loss', save_best_only=True, verbose=1)]
 
 # Import scikit-learn helpers
 from sklearn.model_selection import train_test_split
@@ -26,7 +35,7 @@ def model_predict(model_name, model, X_train, y_train, X_test, y_test, **kwargs)
     #timer
     
     # Fit the model
-    model.fit(X_train, y_train, **kwargs)
+    history = model.fit(X_train, y_train, **kwargs)
 
     # Test the model
     outputs = model.predict(X_test)
@@ -39,16 +48,17 @@ def model_predict(model_name, model, X_train, y_train, X_test, y_test, **kwargs)
     metrics = {
         "name": model_name,
         "confusion_matrix": cm,
-        'accuracy': accuracy
+        'accuracy': accuracy,
     }
-    return metrics
+    return metrics, history
 
 
 def build_simple_classifier(X_train):
     """
     """
     model = Sequential()
-    model.add(Dense(12, input_dim=X_train.shape[1], activation='relu'))
+    model.add(Dense(12, input_dim=X_train.shape[1], activation='relu', kernel_regularizer=regularizers.l2(0.01), bias_regularizer=regularizers.l1(0.02)))
+    #model.add(Dropout(0.2))
     model.add(Dense(12, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -93,39 +103,42 @@ def main():
     start_t = timer()
     # Simple classifier
     simple_classifier = build_simple_classifier(X_train)
-    classifier_results = model_predict(
+    classifier_results, history = model_predict(
                 'simple_classifier',
                 simple_classifier,
                 X_train,
                 y_train,
                 X_test,
                 y_test,
-                batch_size=1,
-                epochs=10,
+                batch_size=100,
+                epochs=100,
+				#callbacks=callbacks,
+                validation_split=0.2
+				
             )
 
-    # SVM
-    svm_classifier = svm.SVC()
-    svm_results = model_predict(
-                'svm',
-                svm_classifier,
-                X_train,
-                y_train,
-                X_test,
-                y_test
-            )
+    # # SVM
+    # svm_classifier = svm.SVC()
+    # svm_results = model_predict(
+                # 'svm',
+                # svm_classifier,
+                # X_train,
+                # y_train,
+                # X_test,
+                # y_test
+            # )
 
-    # KNN
-    knn_classifier = KNeighborsClassifier(n_neighbors = 1)
-    #knn_score=cross_val_score(knn_classifier,X,y,cv=10)
-    knn_results = model_predict(
-                'knn',
-                knn_classifier,
-                X_train,
-                y_train,
-                X_test,
-                y_test
-            )   
+    # # KNN
+    # knn_classifier = KNeighborsClassifier(n_neighbors = 1)
+    # #knn_score=cross_val_score(knn_classifier,X,y,cv=10)
+    # knn_results = model_predict(
+                # 'knn',
+                # knn_classifier,
+                # X_train,
+                # y_train,
+                # X_test,
+                # y_test
+            # )   
     
 	# Build SGD?
 
@@ -152,17 +165,26 @@ def main():
     print("accuracy: {}".format(classifier_results["accuracy"]))
     print("------------------------------------------------")
     print("------------------------------------------------")
-    print("SVM:")	
-    print(svm_results["confusion_matrix"])
-    print("accuracy: {}".format(svm_results["accuracy"]))
-    print("------------------------------------------------")
-    print("------------------------------------------------")
-    print("KNN:")
-    print(knn_results["confusion_matrix"])
-    print("accuracy: {}".format(knn_results["accuracy"]))
-    print("------------------------------------------------")
-    print("elapsed_timer = {} seconds".format(end_t-start_t))
-    print("------------------------------------------------")
+    # print("SVM:")	
+    # print(svm_results["confusion_matrix"])
+    # print("accuracy: {}".format(svm_results["accuracy"]))
+    # print("------------------------------------------------")
+    # print("------------------------------------------------")
+    # print("KNN:")
+    # print(knn_results["confusion_matrix"])
+    # print("accuracy: {}".format(knn_results["accuracy"]))
+    # print("------------------------------------------------")
+    # print("elapsed_timer = {} seconds".format(end_t-start_t))
+    # print("------------------------------------------------")
+
+	#plot
+    plt.plot(range(1, (len(history.history['accuracy'])+1)), history.history['accuracy'])
+    plt.plot(range(1, (len(history.history['val_accuracy'])+1)), history.history['val_accuracy'])
+    plt.title('Model Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
     
 
 if __name__=='__main__':

@@ -44,6 +44,8 @@ def get_data(big_set=False):
     )
 
     data = {
+        "X": X,
+        "y": y,
         "X_train": X_train,
         "X_test": X_test,
         "y_train": y_train,
@@ -67,9 +69,9 @@ def model_predict(model_name, model, data, **kwargs):
     """
     # TODO: Add timing stuff here
 
-    # Fit the model
-    model.fit(data["X_train"], data["y_train"], **kwargs)
-
+    # Fit the model    
+    history = model.fit(data["X_train"], data["y_train"], **kwargs)
+        
     # Test the model
     outputs = model.predict(data["X_test"])
     outputs = (outputs > 0.5)
@@ -81,7 +83,8 @@ def model_predict(model_name, model, data, **kwargs):
     metrics = {
         "name": model_name,
         "confusion_matrix": cm,
-        'accuracy': accuracy
+        "accuracy": accuracy,
+        "history": history
     }
     return metrics
 
@@ -97,10 +100,10 @@ def build_simple_classifier(X_train):
     return model
 
 
-def build_svm():
+def build_svm(**params):
     """
     """
-    return svm.SVC()
+    return svm.SVC(**params)
 
 
 def build_knn(n=1):

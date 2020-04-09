@@ -1,6 +1,3 @@
-import dill
-import pandas as pd
-
 # import models, layers, and optimizers from keras
 from keras.backend import set_session
 from keras.models import Sequential
@@ -13,55 +10,6 @@ from sklearn.metrics import confusion_matrix, classification_report, f1_score, a
 from sklearn import svm
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import cross_val_score
-
-# Set the random seed for splitting data
-RAND_SEED = 42
-
-
-def get_data(big_set=False):
-    """
-    """
-    # Read dataset
-    if big_set:
-        # Read the big input data set
-        all_data = pd.read_csv("csv_data/07_feature_engineering_and_cleaning.csv")
-        all_data["zika_cases"] = all_data["zika_cases"].apply(cast_to_bool)
-        X = all_data.drop(["location", "date", "zika_cases"], axis=1).values
-        y = all_data["zika_cases"].values
-    else:
-        # Read the small input and output data
-        with open("csv_data/X.pkl", "rb") as f:
-            X = dill.load(f)
-        with open("csv_data/y.pkl", "rb") as f:
-            y = dill.load(f)
-
-    # Split into training and testing
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, 
-        y,
-        random_state=RAND_SEED,
-        test_size=0.2
-    )
-
-    data = {
-        "X": X,
-        "y": y,
-        "X_train": X_train,
-        "X_test": X_test,
-        "y_train": y_train,
-        "y_test": y_test,
-    }
-
-    return data
-
-
-def cast_to_bool(zika_cases):
-    """
-    """
-    if zika_cases > 0:
-        return 1
-    else:
-        return 0
 
 
 def model_predict(model_name, model, data, **kwargs):

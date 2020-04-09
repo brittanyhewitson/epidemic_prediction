@@ -4,8 +4,12 @@ import click
 import copy
 import logging
 
+import numpy as np
+from operator import itemgetter
+
+import matplotlib.pyplot as plt
+
 from models import (
-    get_data,
     build_simple_classifier,
     build_svm,
     build_knn,
@@ -18,6 +22,11 @@ from visualize_data import (
     plot_history,
     plot_knn_bar,
     plot_all_results,
+    plot_accuracy_by_date,
+)
+from preprocess_data import(
+    get_data,
+    DATA_CHOICES,
 )
 
 '''
@@ -40,33 +49,9 @@ def setup_gpu(gpu=False):
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 
-def test_simple_classifier(model, data, params):
+def test_simple_classifier(model, data, params, verbose=False):
     """
     """
-    '''
-    default_params = {
-        "batch_size": 10,
-        "epochs": 10
-    }
-    results = []
-    for test_param, values in params.items():
-        for test_constraint in values:
-            #logging.info("Testing {}={}".format(test_param, test_constraint))
-            test_params = copy.deepcopy(default_params)
-            test_params[test_param] = test_constraint
-            classifier_results = model_predict(
-                        'simple_classifier',
-                        model,
-                        data,
-                        verbose=False,
-                        **test_params
-                    )
-            print("accuracy for {}: {}".format(test_params, classifier_results["accuracy"]))
-            classifier_results["varied"] = test_param
-            classifier_results["params"] = test_params
-            results.append(classifier_results)
-    return results
-    '''
     results = []
     for epochs in params["epochs"]:
         for batch_size in params["batch_size"]:
@@ -82,13 +67,14 @@ def test_simple_classifier(model, data, params):
                         validation_data=(data["X_test"], data["y_test"]),
                         **test_params,
                     )
-            print("accuracy for {}: {}".format(test_params, classifier_results["accuracy"]))
+            if verbose:
+                print("accuracy for {}: {}".format(test_params, classifier_results["accuracy"]))
             classifier_results["params"] = test_params
             results.append(classifier_results)
     return results
 
 
-def test_knn(data, neighbours):
+def test_knn(data, neighbours, verbose=False):
     """
     """
     results = []
@@ -100,7 +86,8 @@ def test_knn(data, neighbours):
                     knn_classifier,
                     data,
                 ) 
-        print("accuracy for n_neighbours={}: {}".format(n, classifier_results["accuracy"]))
+        if verbose:
+            print("accuracy for n_neighbours={}: {}".format(n, classifier_results["accuracy"]))
         classifier_results["params"] = {"n_neighbours": n}
         results.append(classifier_results)
     return results
@@ -108,56 +95,85 @@ def test_knn(data, neighbours):
 
 @click.command()
 @click.option("--gpu", is_flag=True)
-@click.option("--big_set", is_flag=True)
+@click.option("--data_choice", default="small_data", type=click.Choice(DATA_CHOICES))
+@click.option("--show_all_plots", is_flag=True)
 def main(**kwargs):
     # Set up GPU/CPU
     setup_gpu(kwargs["gpu"])
 
     # Get the input data
-    data = get_data(big_set=kwargs["big_set"])    
+    data_list = get_data(data_choice=kwargs["data_choice"])    
     
-    # Test the simple classifier parameters
+    # Set up parameters
     simple_params = {
-        "epochs": [1000],
-        "batch_size": [50]
+        "epochs": [10],
+        "batch_size": [100]
     }
-    simple_classifier = build_simple_classifier(data["X_train"])
-    simple_classifier_results = test_simple_classifier(
-                simple_classifier,
-                data,
-                simple_params,
-            )
-
-    # Test SVM
-    svm_classifier = build_svm()
-    svm_results = model_predict(
-                'svm',
-                svm_classifier,
-                data,
-            )
-
-    # Test KNN
     neighbours = [1, 2, 5, 10, 20, 50, 100]
-    knn_results = test_knn(data, neighbours)
 
-    # Visualize results
+    # Set up empty variables
+    best_results = {
+        "simple_classifier": [],
+        "svm": [],
+        "knn": []
+    }
+    dates = []
+    for data in data_list:
+        # If all the training data for this date is the same, then don't use this date
+        if len(np.unique(data["y_train"])) == 1:
+            continue
 
-    # Simple classifier
-    #plot_simple_classifier_scatter(simple_classifier_results)
-    plot_simple_classifier_heatmap(simple_classifier_results, save_fig=True)
-    #plot_simple_classifier_bar(simple_classifier_results)
-    plot_history(simple_classifier_results)
+        # Test the simple classifier parameters
+        simple_classifier = build_simple_classifier(data["X_train"])
+        simple_classifier_results = test_simple_classifier(
+                    simple_classifier,
+                    data,
+                    simple_params,
+                    verbose=True,
+                )
+
+        # Test SVM
+        svm_classifier = build_svm()
+        svm_results = model_predict(
+                    'svm',
+                    svm_classifier,
+                    data,
+                )
+
+        # Test KNN
+        knn_results = test_knn(data, neighbours, verbose=True)
+
+        # Visualize results
+        if kwargs["show_all_plots"]:
+            # Simple classifier
+            #plot_simple_classifier_scatter(simple_classifier_results)
+            #plot_simple_classifier_bar(simple_classifier_results)
+            plot_simple_classifier_heatmap(simple_classifier_results, save_fig=True)
+            plot_history(simple_classifier_results)
+
+            # TODO: Add SVM later for big data and small data
+
+            # KNN    
+            plot_knn_bar(knn_results, save_fig=True)
+
+            # Compare Classifiers
+            all_results = [simple_classifier_results, [svm_results], knn_results]
+            plot_all_results(all_results, save_fig=True)
+
+        all_results = [simple_classifier_results, [svm_results], knn_results]
+        
+        # Sort all results
+        for result_list in all_results:
+            # Sort according to accuracy
+            sorted_list = sorted(result_list, key=itemgetter("accuracy"), reverse=True)
+            result = sorted_list[0]
+            best_results[result["name"]].append(result["accuracy"]*100)
+
+        dates.append(data["date"])
     
-
-    # TODO: Add SVM later for big data and small data
-
-
-    # KNN    
-    plot_knn_bar(knn_results, save_fig=True)
-
-    # Compare Classifiers
-    all_results = [simple_classifier_results, [svm_results], knn_results]
-    plot_all_results(all_results, save_fig=True)
+    if len(np.unique(dates)) > 1:
+        plot_accuracy_by_date(dates, best_results)
+    
 
 
 

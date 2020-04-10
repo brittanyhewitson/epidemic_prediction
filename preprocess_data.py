@@ -5,7 +5,7 @@ import dill
 import logging
 from sklearn.utils import resample
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTE, SMOTENC
+from imblearn.over_sampling import SMOTENC
 from collections import Counter
 import numpy as np
 import pandas as pd

@@ -229,18 +229,20 @@ def plot_simple_classifier_scatter(results, save_fig=False):
     max_val = max(accuracies)
     normalized = np.round((accuracies-min_val)/(max_val-min_val), 2)*100
     
+    title = results[0]["name"].replace("_", " ")
     fig, ax = plt.subplots()
     scatter = ax.scatter(batches, epochs, s=normalized)
     handles, labels = scatter.legend_elements(prop="sizes", alpha=0.5)
     legend = ax.legend(handles, labels, loc="upper right", title="Sizes")
     plt.xlabel("Number of Batches")
     plt.ylabel("Number of Epochs")
-    plt.title("Accuracy for Simple Classifier")
+    plt.title(f"Accuracy for {title}")
     if save_fig:
         # If the output directory does not yet exist
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
-        plt.savefig("output_images/simple_scatter.png")
+        filename = results[0]["name"]
+        plt.savefig(f"output_images/{filename}_scatter.png")
     plt.show()
     plt.clf()
 
@@ -271,13 +273,15 @@ def plot_simple_classifier_heatmap(results, save_fig=False):
         #annot_kws={"size": 10}, 
         #vmin=0.6
         )
-    plt.title("Simple Classifier")
+    title = results[0]["name"].replace("_", " ")
+    plt.title(title)
     plt.tight_layout()
     if save_fig:
         # If the output directory does not yet exist
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
-        plt.savefig("output_images/simple_heatmap.png")
+        filename = results[0]["name"]
+        plt.savefig(f"output_images/{filename}_heatmap.png")
     plt.show()
     plt.clf()
     
@@ -303,29 +307,37 @@ def plot_simple_classifier_bar(results, save_fig=False):
         plt.xlabel(constraint)
         plt.ylabel("Accuracy")
         plt.title("Accuracy by {}".format(constraint.strip("s").replace("_", " ")))
+        plt.tight_layout()
         if save_fig:
             # If the output directory does not yet exist
             if not os.path.exists("output_images"):
                 os.makedirs("output_images")
-            plt.savefig("output_images/simple_bar.png")
+            filename = results[0]["name"]
+            plt.savefig(f"output_images/{filename}_bar.png")
         plt.show()
         plt.clf()
 
 
-def plot_history(results):
+def plot_history(results, save_fig=False):
     """
     """
     for result in results:
         history = result["history"]
-        #history.history['accuracy'][0] = 0.6
-        #history.history['val_accuracy'][0] = 0.55
         plt.plot(range(1, (len(history.history['accuracy'])+1)), history.history['accuracy'])
         plt.plot(range(1, (len(history.history['val_accuracy'])+1)), history.history['val_accuracy'])
         #plt.ylim((0.5, 1.0))
-        plt.title('Model Accuracy for epochs={} batch_size={}'.format(result["params"]["epochs"], result["params"]["batch_size"]))
+        title = result["name"].replace("_", " ")
+        plt.title('{} accuracy for epochs={} batch_size={}'.format(title, result["params"]["epochs"], result["params"]["batch_size"]))
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
         plt.legend(['train', 'test'], loc='upper right')
+        plt.tight_layout()
+        if save_fig:
+            # If the output directory does not yet exist
+            if not os.path.exists("output_images"):
+                os.makedirs("output_images")
+            filename = result["name"]
+            plt.savefig(f"output_images/{filename}_history.png")
         plt.show()
 
 

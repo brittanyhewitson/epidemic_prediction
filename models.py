@@ -2,7 +2,7 @@
 from keras.backend import set_session
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, SimpleRNN
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam
 
 # Import scikit-learn helpers
 from sklearn.model_selection import train_test_split
@@ -58,3 +58,54 @@ def build_knn(n=1):
     """
     """
     return KNeighborsClassifier(n_neighbors=n)
+
+
+def build_mlp(X_train):
+    """
+    """
+    # Set up nodes
+    hidden_nodes = 200
+    output_nodes = 1
+
+    # Set up parameters (make these inputs to the function)
+    learning_rate = 0.001
+    optimizer = Adam(learning_rate=learning_rate)
+    activation_function = "sigmoid"
+    loss = "binary_crossentropy"
+
+    model = Sequential()
+    # Hidden layers
+    model.add(Dense(
+        hidden_nodes,
+        activation=activation_function,
+        input_dim=X_train.shape[1],
+        use_bias=False,
+    ))
+    model.add(Dense(
+        hidden_nodes,
+        activation=activation_function,
+        use_bias=False,
+    ))
+    model.add(Dense(
+        hidden_nodes,
+        activation=activation_function,
+        use_bias=False,
+    ))
+    model.add(Dense(
+        hidden_nodes,
+        activation=activation_function,
+        use_bias=False,
+    ))
+    model.add(Dense(
+        hidden_nodes,
+        activation=activation_function,
+        use_bias=False,
+    ))
+
+    # Output layer
+    model.add(Dense(output_nodes, activation=activation_function, bias=False))
+
+    # Compile the model
+    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
+
+    return model

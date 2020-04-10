@@ -13,6 +13,7 @@ from models import (
     build_simple_classifier,
     build_svm,
     build_knn,
+    build_mlp,
     model_predict,
 )
 from visualize_data import (
@@ -49,7 +50,7 @@ def setup_gpu(gpu=False):
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 
-def test_simple_classifier(model, data, params, verbose=False):
+def test_nn(model, data, model_name, params, verbose=False):
     """
     """
     results = []
@@ -60,7 +61,7 @@ def test_simple_classifier(model, data, params, verbose=False):
                 "batch_size": batch_size
             }
             classifier_results = model_predict(
-                        'simple_classifier',
+                        model_name,
                         model,
                         data,
                         verbose=False,
@@ -105,9 +106,9 @@ def main(**kwargs):
     data_list = get_data(data_choice=kwargs["data_choice"])    
     
     # Set up parameters
-    simple_params = {
-        "epochs": [10],
-        "batch_size": [100]
+    nn_params = {
+        "epochs": [10, 50],
+        "batch_size": [100, 250]
     }
     neighbours = [1, 2, 5, 10, 20, 50, 100]
 
@@ -125,11 +126,22 @@ def main(**kwargs):
 
         # Test the simple classifier parameters
         simple_classifier = build_simple_classifier(data["X_train"])
-        simple_classifier_results = test_simple_classifier(
+        simple_classifier_results = test_nn(
                     simple_classifier,
                     data,
-                    simple_params,
+                    'simple_classifier',
+                    nn_params,
                     verbose=True,
+                )
+
+        # Test MLP
+        mlp = build_mlp(data["X_train"])
+        mlp_results = test_nn(
+                    mlp,
+                    data,
+                    'mlp',
+                    nn_params,
+                    verbose=True
                 )
 
         # Test SVM
@@ -148,17 +160,20 @@ def main(**kwargs):
             # Simple classifier
             #plot_simple_classifier_scatter(simple_classifier_results)
             #plot_simple_classifier_bar(simple_classifier_results)
-            plot_simple_classifier_heatmap(simple_classifier_results, save_fig=True)
+            plot_simple_classifier_heatmap(simple_classifier_results, save_fig=False)
             plot_history(simple_classifier_results)
+
+            plot_simple_classifier_heatmap(mlp_results, save_fig=False)
+            plot_history(mlp_results)
 
             # TODO: Add SVM later for big data and small data
 
             # KNN    
-            plot_knn_bar(knn_results, save_fig=True)
+            plot_knn_bar(knn_results, save_fig=False)
 
             # Compare Classifiers
-            all_results = [simple_classifier_results, [svm_results], knn_results]
-            plot_all_results(all_results, save_fig=True)
+            all_results = [simple_classifier_results, [svm_results], knn_results, mlp_results]
+            plot_all_results(all_results, save_fig=False)
 
         all_results = [simple_classifier_results, [svm_results], knn_results]
         

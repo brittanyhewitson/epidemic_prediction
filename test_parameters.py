@@ -9,26 +9,32 @@ from operator import itemgetter
 
 import matplotlib.pyplot as plt
 
-from models import (
+from src.helpers import (
+    setup_gpu,
+)
+from src.models import (
     build_simple_classifier,
     build_svm,
     build_knn,
     build_mlp,
     build_rf,
     model_predict,
+    test_nn,
+    test_knn,
+    test_rf,
 )
-from visualize_data import (
-    plot_simple_classifier_scatter,
+from src.visualize_data import (
     plot_simple_classifier_heatmap,
-    plot_simple_classifier_bar,
     plot_history,
     plot_knn_bar,
     plot_rf_bar,
     plot_all_results,
     plot_accuracy_by_date,
 )
-from preprocess_data import(
+from src.preprocess_data import(
     get_data,
+)
+from src.templates import (
     DATA_CHOICES,
 )
 
@@ -40,78 +46,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 '''
-
-def setup_gpu(gpu=False):
-    """
-    """
-    if gpu:
-        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-    else:
-        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
-
-def test_nn(model, data, model_name, params, verbose=False):
-    """
-    """
-    results = []
-    for epochs in params["epochs"]:
-        for batch_size in params["batch_size"]:
-            test_params = {
-                "epochs": epochs,
-                "batch_size": batch_size
-            }
-            classifier_results = model_predict(
-                        model_name,
-                        model,
-                        data,
-                        verbose=False,
-                        validation_data=(data["X_test"], data["y_test"]),
-                        **test_params,
-                    )
-            if verbose:
-                print("accuracy for {}: {}".format(test_params, classifier_results["accuracy"]))
-            classifier_results["params"] = test_params
-            results.append(classifier_results)
-    return results
-
-
-def test_knn(data, neighbours, verbose=False):
-    """
-    """
-    results = []
-    for n in neighbours:
-        knn_classifier = build_knn(n=n)
-        logging.info("Testing n_neighbours={}".format(n))
-        classifier_results = model_predict(
-                    'knn',
-                    knn_classifier,
-                    data,
-                ) 
-        if verbose:
-            print("accuracy for n_neighbours={}: {}".format(n, classifier_results["accuracy"]))
-        classifier_results["params"] = {"n_neighbours": n}
-        results.append(classifier_results)
-    return results
-
-def test_rf(data, estimators, verbose=False):
-    """
-    """
-    results = []
-    for n in estimators:
-        rf_classifier = build_rf(n=n)
-        logging.info("Testing n_estimators={}".format(n))
-        classifier_results = model_predict(
-                    'rf',
-                    rf_classifier,
-                    data,
-                ) 
-        if verbose:
-            print("accuracy for n_estimators={}: {}".format(n, classifier_results["accuracy"]))
-        classifier_results["params"] = {"n_estimators": n}
-        results.append(classifier_results)
-    return results
 
 @click.command()
 @click.option("--gpu", is_flag=True)
@@ -183,19 +117,19 @@ def main(**kwargs):
         # Visualize results
         if kwargs["show_all_plots"]:
             # Simple classifier
-            #plot_simple_classifier_scatter(simple_classifier_results)
-            #plot_simple_classifier_bar(simple_classifier_results)
             plot_simple_classifier_heatmap(simple_classifier_results, save_fig=False)
             plot_history(simple_classifier_results)
 
+            # MLP
             plot_simple_classifier_heatmap(mlp_results, save_fig=False)
             plot_history(mlp_results)
 
             # TODO: Add SVM later for big data and small data
 
             # KNN    
-
             plot_knn_bar(knn_results, save_fig=False)
+
+            # RF
             plot_rf_bar(rf_results, save_fig=True)
 			
             # Compare Classifiers

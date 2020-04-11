@@ -1,3 +1,5 @@
+import logging
+
 # import models, layers, and optimizers from keras
 from keras.backend import set_session
 from keras.models import Sequential
@@ -49,17 +51,6 @@ def build_simple_classifier(X_train):
     return model
 
 
-def build_svm(**params):
-    """
-    """
-    return svm.SVC(**params)
-
-
-def build_knn(n=1):
-    """
-    """
-    return KNeighborsClassifier(n_neighbors=n)
-
 def build_mlp(X_train):
     """
     """
@@ -103,14 +94,90 @@ def build_mlp(X_train):
     ))
 
     # Output layer
-    model.add(Dense(output_nodes, activation=activation_function, bias=False))
+    model.add(Dense(output_nodes, activation=activation_function, use_bias=False))
 
     # Compile the model
     model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
 
     return model
 
+
+def test_nn(model, data, model_name, params, verbose=False):
+    """
+    """
+    results = []
+    for epochs in params["epochs"]:
+        for batch_size in params["batch_size"]:
+            test_params = {
+                "epochs": epochs,
+                "batch_size": batch_size
+            }
+            classifier_results = model_predict(
+                        model_name,
+                        model,
+                        data,
+                        verbose=False,
+                        validation_data=(data["X_test"], data["y_test"]),
+                        **test_params,
+                    )
+            if verbose:
+                print("accuracy for {}: {}".format(test_params, classifier_results["accuracy"]))
+            classifier_results["params"] = test_params
+            results.append(classifier_results)
+    return results
+
+
+def build_svm(**params):
+    """
+    """
+    return svm.SVC(**params)
+
+
+def build_knn(n=1):
+    """
+    """
+    return KNeighborsClassifier(n_neighbors=n)
+
+
+def test_knn(data, neighbours, verbose=False):
+    """
+    """
+    results = []
+    for n in neighbours:
+        knn_classifier = build_knn(n=n)
+        logging.info("Testing n_neighbours={}".format(n))
+        classifier_results = model_predict(
+                    'knn',
+                    knn_classifier,
+                    data,
+                ) 
+        if verbose:
+            print("accuracy for n_neighbours={}: {}".format(n, classifier_results["accuracy"]))
+        classifier_results["params"] = {"n_neighbours": n}
+        results.append(classifier_results)
+    return results
+
+
 def build_rf(n=10):
     """
     """
     return RandomForestClassifier(n_estimators=n)
+
+
+def test_rf(data, estimators, verbose=False):
+    """
+    """
+    results = []
+    for n in estimators:
+        rf_classifier = build_rf(n=n)
+        logging.info("Testing n_estimators={}".format(n))
+        classifier_results = model_predict(
+                    'rf',
+                    rf_classifier,
+                    data,
+                ) 
+        if verbose:
+            print("accuracy for n_estimators={}: {}".format(n, classifier_results["accuracy"]))
+        classifier_results["params"] = {"n_estimators": n}
+        results.append(classifier_results)
+    return results

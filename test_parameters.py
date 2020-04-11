@@ -14,6 +14,7 @@ from models import (
     build_svm,
     build_knn,
     build_mlp,
+    build_rf,
     model_predict,
 )
 from visualize_data import (
@@ -22,6 +23,7 @@ from visualize_data import (
     plot_simple_classifier_bar,
     plot_history,
     plot_knn_bar,
+    plot_rf_bar,
     plot_all_results,
     plot_accuracy_by_date,
 )
@@ -93,6 +95,23 @@ def test_knn(data, neighbours, verbose=False):
         results.append(classifier_results)
     return results
 
+def test_rf(data, estimators, verbose=False):
+    """
+    """
+    results = []
+    for n in estimators:
+        rf_classifier = build_rf(n=n)
+        logging.info("Testing n_estimators={}".format(n))
+        classifier_results = model_predict(
+                    'rf',
+                    rf_classifier,
+                    data,
+                ) 
+        if verbose:
+            print("accuracy for n_estimators={}: {}".format(n, classifier_results["accuracy"]))
+        classifier_results["params"] = {"n_estimators": n}
+        results.append(classifier_results)
+    return results
 
 @click.command()
 @click.option("--gpu", is_flag=True)
@@ -111,13 +130,16 @@ def main(**kwargs):
         "batch_size": [100, 250]
     }
     neighbours = [1, 2, 5, 10, 20, 50, 100]
+    estimators = [1, 2, 5, 10, 20, 50, 100]
 
     # Set up empty variables
     best_results = {
         "simple_classifier": [],
         "svm": [],
-        "knn": []
+        "knn": [],
+        "rf": []
     }
+    
     dates = []
     for data in data_list:
         # If all the training data for this date is the same, then don't use this date
@@ -154,6 +176,9 @@ def main(**kwargs):
 
         # Test KNN
         knn_results = test_knn(data, neighbours, verbose=True)
+		
+        # Test RF
+        rf_results = test_rf(data, estimators, verbose=True)
 
         # Visualize results
         if kwargs["show_all_plots"]:
@@ -169,14 +194,15 @@ def main(**kwargs):
             # TODO: Add SVM later for big data and small data
 
             # KNN    
+
             plot_knn_bar(knn_results, save_fig=False)
-
+            plot_rf_bar(rf_results, save_fig=True)
+			
             # Compare Classifiers
-            all_results = [simple_classifier_results, [svm_results], knn_results, mlp_results]
-            plot_all_results(all_results, save_fig=False)
+            all_results = [simple_classifier_results, [svm_results], knn_results, rf_results, mlp_results]
+            plot_all_results(all_results, save_fig=False) 
 
-        all_results = [simple_classifier_results, [svm_results], knn_results]
-        
+        all_results = [simple_classifier_results, [svm_results], knn_results, rf_results]			
         # Sort all results
         for result_list in all_results:
             # Sort according to accuracy

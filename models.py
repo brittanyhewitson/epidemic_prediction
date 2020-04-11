@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, accuracy_score
 from sklearn import svm
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 
 
@@ -59,7 +60,6 @@ def build_knn(n=1):
     """
     return KNeighborsClassifier(n_neighbors=n)
 
-
 def build_mlp(X_train):
     """
     """
@@ -109,3 +109,8 @@ def build_mlp(X_train):
     model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
 
     return model
+
+def build_rf(n=10):
+    """
+    """
+    return RandomForestClassifier(n_estimators=n)

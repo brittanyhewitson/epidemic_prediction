@@ -360,6 +360,26 @@ def plot_knn_bar(results, save_fig=False):
         plt.savefig("output_images/knn_bar.png")
     plt.show()
     plt.clf()
+	
+def plot_rf_bar(results, save_fig=False):
+    """
+    """
+    params = list(map(itemgetter("params"), results))
+    estimators = list(map(itemgetter("n_estimators"), params))
+    accuracies = list(map(itemgetter("accuracy"), results))
+
+    # Create the plot
+    plt.bar(list(map(str, estimators)), accuracies)
+    plt.xlabel("Number of estimators")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy by number of estimators")
+    if save_fig:
+        # If the output directory does not yet exist
+        if not os.path.exists("output_images"):
+            os.makedirs("output_images")
+        plt.savefig("output_images/rf_bar.png")
+    plt.show()
+    plt.clf()	
     
 
 def plot_all_results(all_results, save_fig=False):

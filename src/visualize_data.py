@@ -117,7 +117,7 @@ def plot_feature_output_correlation(all_data, save_fig=False):
     
     # Try simple correlation
     corrmat = all_data.corr()
-    plt.subplots(figsize=(20,15))
+    plt.subplots(figsize=(17,17))
     sns.heatmap(
         corrmat, 
         cmap=sns.color_palette("RdBu_r"), 
@@ -157,7 +157,7 @@ def plot_feature_output_correlation(all_data, save_fig=False):
 # RESULTS
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def plot_simple_classifier_heatmap(results, save_fig=False):
+def plot_nn_heatmap(results, save_fig=False):
     """
     """
     accuracies = list(map(itemgetter("accuracy"), results))
@@ -297,6 +297,34 @@ def plot_accuracy_by_date(dates, results, save_fig=False):
     plt.ylabel("Accuracy (%)")
     plt.xlabel("Date")
     plt.xticks(rotation=90)
+    if save_fig:
+        # If the output directory does not yet exist
+        if not os.path.exists("output_images"):
+            os.makedirs("output_images")
+        plt.savefig("output_images/accuracy_by_date.png")
+    plt.show()
+    plt.clf()
+
+
+def plot_accuracy_by_date_subplot(dates, results, save_fig=False):
+    """
+    """
+    num_plots = len(results)
+    fig, axs = plt.subplots(num_plots, sharex=True, sharey=True, figsize=(15,10))
+    i = 0
+    for key, val in results.items():
+        axs[i].plot(dates, val, label=key)
+        axs[i].set_title(key.replace("_", " "))
+        i += 1
+
+    plt.xlabel("Date")
+    plt.xticks(rotation=90)
+    
+    for ax in axs.flat:
+        ax.label_outer()
+
+    fig.text(0.002, 0.5, 'Accuracy (%)', va='center', rotation='vertical')
+    plt.tight_layout()
     if save_fig:
         # If the output directory does not yet exist
         if not os.path.exists("output_images"):

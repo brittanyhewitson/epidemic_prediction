@@ -24,12 +24,12 @@ from src.models import (
     test_rf,
 )
 from src.visualize_data import (
-    plot_simple_classifier_heatmap,
+    plot_nn_heatmap,
     plot_history,
     plot_knn_bar,
     plot_rf_bar,
     plot_all_results,
-    plot_accuracy_by_date,
+    plot_accuracy_by_date_subplot,
 )
 from src.preprocess_data import(
     get_data,
@@ -60,11 +60,11 @@ def main(**kwargs):
     
     # Set up parameters
     nn_params = {
-        "epochs": [10, 50],
-        "batch_size": [100, 250]
+        "epochs": [10],
+        "batch_size": [100]
     }
-    neighbours = [1, 2, 5, 10, 20, 50, 100]
-    estimators = [1, 2, 5, 10, 20, 50, 100]
+    neighbours = [10]
+    estimators = [10]
 
     # Set up empty variables
     best_results = {
@@ -117,11 +117,11 @@ def main(**kwargs):
         # Visualize results
         if kwargs["show_all_plots"]:
             # Simple classifier
-            plot_simple_classifier_heatmap(simple_classifier_results, save_fig=False)
+            plot_nn_heatmap(simple_classifier_results, save_fig=False)
             plot_history(simple_classifier_results)
 
             # MLP
-            plot_simple_classifier_heatmap(mlp_results, save_fig=False)
+            plot_nn_heatmap(mlp_results, save_fig=False)
             plot_history(mlp_results)
 
             # TODO: Add SVM later for big data and small data
@@ -147,7 +147,7 @@ def main(**kwargs):
         dates.append(data["date"])
     
     if len(np.unique(dates)) > 1:
-        plot_accuracy_by_date(dates, best_results)
+        plot_accuracy_by_date_subplot(dates, best_results)
     
 
 

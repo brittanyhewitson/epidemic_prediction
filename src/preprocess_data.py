@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from operator import itemgetter
 from imblearn.over_sampling import SMOTENC
 from sklearn.model_selection import train_test_split
 
@@ -20,6 +21,7 @@ from src.helpers import (
 from src.templates import (
     RANDOM_SEED,
     DATA_CHOICES,
+    REGEX,
 )
 
 '''
@@ -94,6 +96,8 @@ def get_data(data_choice="small_data"):
 
                 # Add to list
                 by_date_data.append(data)
+        # Sort according to date
+        by_date_data = sorted(by_date_data, key=itemgetter('date'), reverse=False)
         return by_date_data
     else:
         if data_choice == "big_data":

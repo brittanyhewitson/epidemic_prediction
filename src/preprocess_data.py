@@ -129,7 +129,7 @@ def get_data(data_choice="small_data"):
         "y_test": y_test,
     }
 
-    return [data]
+    return data
 
 
 def smote(data, save_data=False, filename=None, view_plots=True):

@@ -7,7 +7,6 @@ DATA_CHOICES = [
     "big_data",
     "small_data",
     "smote",
-    "by_date",
 ]
 
 ZIKA_DATAFIELD_TO_KEEP = [

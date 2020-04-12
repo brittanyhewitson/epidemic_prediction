@@ -4,7 +4,7 @@ import logging
 from keras.backend import set_session
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, SimpleRNN
-from keras.optimizers import SGD, Adam
+from keras.optimizers import SGD, Adam, RMSprop, Adagrad, Adadelta, Adamax, Nadam
 
 # Import scikit-learn helpers
 from sklearn.model_selection import train_test_split
@@ -51,18 +51,32 @@ def build_simple_classifier(X_train):
     return model
 
 
-def build_mlp(X_train):
+def build_mlp(X_train, learning_rate=0.001, optimizer="adam"):
     """
     """
     # Set up nodes
-    hidden_nodes = 200
+    hidden_nodes = 50
     output_nodes = 1
 
-    # Set up parameters (make these inputs to the function)
-    learning_rate = 0.001
-    optimizer = Adam(learning_rate=learning_rate)
+    # Set up parameters
     activation_function = "sigmoid"
     loss = "binary_crossentropy"
+
+    # Set up optimizer
+    if optimizer == "adam":
+        opt = Adam(learning_rate=learning_rate)
+    elif optimizer == "sgd":
+        opt = SGD(learning_rate=learning_rate)
+    elif optimizer == "rmsprop":
+        opt = RMSprop(learning_rate=learning_rate)
+    elif optimizer == "adagrad":
+        opt = Adagrad(learning_rate=learning_rate)
+    elif optimizer == "adadelta":
+        opt = Adadelta(learning_rate=learning_rate)
+    elif optimizer == "adamax":
+        opt = Adamax(learning_rate=learning_rate)
+    elif optimizer == "nadam":
+        opt = Nadam(learning_rate=learning_rate)
 
     model = Sequential()
     # Hidden layers
@@ -73,22 +87,22 @@ def build_mlp(X_train):
         use_bias=False,
     ))
     model.add(Dense(
-        hidden_nodes,
+        2*hidden_nodes,
         activation=activation_function,
         use_bias=False,
     ))
     model.add(Dense(
-        hidden_nodes,
+        4*hidden_nodes,
         activation=activation_function,
         use_bias=False,
     ))
     model.add(Dense(
-        hidden_nodes,
+        6*hidden_nodes,
         activation=activation_function,
         use_bias=False,
     ))
     model.add(Dense(
-        hidden_nodes,
+        8*hidden_nodes,
         activation=activation_function,
         use_bias=False,
     ))

@@ -47,24 +47,22 @@ logging.basicConfig(
 )
 '''
 
-@click.command()
-@click.option("--gpu", is_flag=True)
-@click.option("--data_choice", default="small_data", type=click.Choice(DATA_CHOICES))
-@click.option("--show_all_plots", is_flag=True)
-def main(**kwargs):
-    # Set up GPU/CPU
-    setup_gpu(kwargs["gpu"])
-
+def test_by_date(params=None):
+    """
+    """
     # Get the input data
-    data_list = get_data(data_choice=kwargs["data_choice"])    
+    data_list = get_data(data_choice="by_date")    
     
     # Set up parameters
-    nn_params = {
-        "epochs": [10],
-        "batch_size": [100]
-    }
-    neighbours = [10]
-    estimators = [10]
+    if not params:
+        params = {
+            "nn_params": {
+                "epochs": [150],
+                "batch_size": [300]
+            },
+            "neighbours": [5, 10],
+            "estimators": [10, 50, 100]
+        }
 
     # Set up empty variables
     best_results = {
@@ -86,17 +84,17 @@ def main(**kwargs):
                     simple_classifier,
                     data,
                     'simple_classifier',
-                    nn_params,
+                    params["nn_params"],
                     verbose=True,
                 )
-
+        # Test different learning rates and optimizers, 
         # Test MLP
         mlp = build_mlp(data["X_train"])
         mlp_results = test_nn(
                     mlp,
                     data,
                     'mlp',
-                    nn_params,
+                    params["nn_params"],
                     verbose=True
                 )
 
@@ -109,33 +107,12 @@ def main(**kwargs):
                 )
 
         # Test KNN
-        knn_results = test_knn(data, neighbours, verbose=True)
+        knn_results = test_knn(data, params["neighbours"], verbose=True)
 		
         # Test RF
-        rf_results = test_rf(data, estimators, verbose=True)
+        rf_results = test_rf(data, params["estimators"], verbose=True)
 
         # Visualize results
-        if kwargs["show_all_plots"]:
-            # Simple classifier
-            plot_nn_heatmap(simple_classifier_results, save_fig=False)
-            plot_history(simple_classifier_results)
-
-            # MLP
-            plot_nn_heatmap(mlp_results, save_fig=False)
-            plot_history(mlp_results)
-
-            # TODO: Add SVM later for big data and small data
-
-            # KNN    
-            plot_knn_bar(knn_results, save_fig=False)
-
-            # RF
-            plot_rf_bar(rf_results, save_fig=True)
-			
-            # Compare Classifiers
-            all_results = [simple_classifier_results, [svm_results], knn_results, rf_results, mlp_results]
-            plot_all_results(all_results, save_fig=False) 
-
         all_results = [simple_classifier_results, [svm_results], knn_results, rf_results]			
         # Sort all results
         for result_list in all_results:
@@ -145,9 +122,81 @@ def main(**kwargs):
             best_results[result["name"]].append(result["accuracy"]*100)
 
         dates.append(data["date"])
+    plot_accuracy_by_date_subplot(dates, best_results)
+    return best_results
+
+
+def test_nn_params(data, model_params=None, test_params=None):
+    """
+    """
+    if not model_params:
+        model_params = {
+            "learning_rates": [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001],
+            "optimizers": ["adam", "sgd", "rmsprop", "adagrad", "adadelta", "adamax", "nadam"] 
+        }
+    if not test_params:
+        test_params = {
+            "epochs": [1, 5, 10, 50, 100, 500, 1000, 5000],
+            "batch_size": [1, 5, 10, 50, 100, 500, 1000]
+        }
     
-    if len(np.unique(dates)) > 1:
-        plot_accuracy_by_date_subplot(dates, best_results)
+    all_mlp_results = []
+    for learning_rate in model_params["learning_rates"]:
+        for optimizer in model_params["optimizers"]:
+            # Build the model
+            mlp = build_mlp(data["X_train"], learning_rate=learning_rate, optimizer=optimizer)
+
+            # Test the model
+            mlp_results = test_nn(mlp, data, 'mlp', test_params, verbose=True)
+
+
+
+@click.command()
+@click.option("--gpu", is_flag=True)
+@click.option("--data_choice", default="small_data", type=click.Choice(DATA_CHOICES))
+@click.option("--show_all_plots", is_flag=True)
+def main(**kwargs):
+    # Set up GPU/CPU
+    setup_gpu(kwargs["gpu"])
+
+    # Test data by the date
+    date_results = test_by_date()
+
+    # Read input data
+    data = get_data(data_choice=kwargs["data_choice"])
+
+    # Test nn parameters
+
+
+    # Test neighbours
+
+
+    # Test estimators
+
+
+
+
+    if kwargs["show_all_plots"]:
+        # Simple classifier
+        plot_nn_heatmap(simple_classifier_results, save_fig=False)
+        plot_history(simple_classifier_results)
+
+        # MLP
+        plot_nn_heatmap(mlp_results, save_fig=False)
+        plot_history(mlp_results)
+
+        # TODO: Add SVM later for big data and small data
+
+        # KNN    
+        plot_knn_bar(knn_results, save_fig=False)
+
+        # RF
+        plot_rf_bar(rf_results, save_fig=True)
+        
+        # Compare Classifiers
+        all_results = [simple_classifier_results, [svm_results], knn_results, rf_results, mlp_results]
+        plot_all_results(all_results, save_fig=False) 
+    
     
 
 

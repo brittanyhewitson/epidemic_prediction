@@ -7,8 +7,6 @@ import logging
 import numpy as np
 from operator import itemgetter
 
-import matplotlib.pyplot as plt
-
 from src.helpers import (
     setup_gpu,
 )
@@ -25,7 +23,6 @@ from src.models import (
 )
 from src.visualize_data import (
     plot_nn_heatmap,
-    plot_nn_model_params,
     plot_history,
     plot_knn_bar,
     plot_rf_bar,
@@ -48,7 +45,7 @@ logging.basicConfig(
 )
 '''
 
-def test_by_date(params=None):
+def test_by_date(params=None, verbose=False):
     """
     """
     # Get the input data
@@ -86,7 +83,7 @@ def test_by_date(params=None):
                     data,
                     'simple_classifier',
                     params["nn_params"],
-                    verbose=True,
+                    verbose=verbose,
                 )
         # Test different learning rates and optimizers, 
         # Test MLP
@@ -96,7 +93,7 @@ def test_by_date(params=None):
                     data,
                     'mlp',
                     params["nn_params"],
-                    verbose=True
+                    verbose=verbose
                 )
 
         # Test SVM
@@ -108,10 +105,10 @@ def test_by_date(params=None):
                 )
 
         # Test KNN
-        knn_results = test_knn(data, params["neighbours"], verbose=True)
+        knn_results = test_knn(data, params["neighbours"], verbose=verbose)
 		
         # Test RF
-        rf_results = test_rf(data, params["estimators"], verbose=True)
+        rf_results = test_rf(data, params["estimators"], verbose=verbose)
 
         # Visualize results
         all_results = [simple_classifier_results, mlp_results, [svm_results], knn_results, rf_results]			
@@ -127,13 +124,14 @@ def test_by_date(params=None):
     return best_results
 
 
-def test_nn_model_params(data, model_params=None, test_params=None):
+def test_nn_optimizer(data, model_params=None, test_params=None, verbose=False):
     """
     """
     if not model_params:
         model_params = {
             "learning_rates": [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001],
-            "optimizers": ["adam", "sgd", "rmsprop", "adagrad", "adadelta", "adamax", "nadam"] 
+            "optimizers": ["adam", "sgd", "rmsprop", "adagrad", "adadelta", "adamax", "nadam"],
+            "regularizer": None, 
         }
     if not test_params:
         test_params = {
@@ -150,25 +148,120 @@ def test_nn_model_params(data, model_params=None, test_params=None):
             mlp = build_mlp(data["X_train"], learning_rate=learning_rate, optimizer=optimizer)
 
             # Test the model
-            simple_classifier_results = test_nn(simple_classifier, data, 'simple_classifier', test_params, optimizer, learning_rate, verbose=True)
-            mlp_results = test_nn(mlp, data, 'mlp', test_params, optimizer, learning_rate, verbose=True)
+            if verbose:
+                print("SIMPLE CLASSIFIER - LEARNING_RATE {}, OPTIMIZER {}".format(learning_rate, optimizer))
+            simple_classifier_results = test_nn(
+                simple_classifier, 
+                data, 
+                'simple_classifier', 
+                test_params, 
+                optimizer, 
+                learning_rate, 
+                verbose=verbose
+            )
+            if verbose:
+                print("MLP - LEARNING_RATE {}, OPTIMIZER {}".format(learning_rate, optimizer))
+            mlp_results = test_nn(
+                mlp, 
+                data, 
+                'mlp', 
+                test_params, 
+                optimizer, 
+                learning_rate, 
+                verbose=verbose
+            )
 
             all_simple_results = all_simple_results + simple_classifier_results
             all_mlp_results = all_mlp_results + mlp_results
 
-    plot_nn_model_params(all_simple_results, save_fig=True)
-    plot_nn_model_params(all_mlp_results, save_fig=True)
+    plot_nn_heatmap(all_simple_results, plot_type="optimizer", save_fig=True)
+    plot_nn_heatmap(all_mlp_results, plot_type="optimizer", save_fig=True)
 
     return all_simple_results, all_mlp_results
 
 
-def test_nn_test_params(data, model_params=None, test_params=None):
+def test_nn_reg(data, model_params=None, test_params=None, verbose=False):
     """
     """
     if not model_params:
         model_params = {
             "learning_rates": 0.01,
-            "optimizers": "adagrad"
+            "optimizers": "adam",
+            "regularizer": [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001],
+            "dropout": [True, False]
+        }
+
+    if not test_params:
+        test_params = {
+            "epochs": [100],
+            "batch_size": [500]
+        }
+
+    all_simple_results = []
+    all_mlp_results = []
+    for regularizer in model_params["regularizer"]:
+        for dropout in model_params["dropout"]:
+            # Build the models
+            simple_classifier = build_simple_classifier(
+                data["X_train"], 
+                learning_rate=model_params["learning_rates"], 
+                optimizer=model_params["optimizers"],
+                regularizer=regularizer,
+                dropout=dropout,
+            )
+            mlp = build_mlp(
+                data["X_train"], 
+                learning_rate=model_params["learning_rates"], 
+                optimizer=model_params["optimizers"],
+                regularizer=regularizer,
+                dropout=dropout
+            )
+
+            # Test the model
+            if verbose:
+                print("SIMPLE CLASSIFIER - REGULARIZER {}, DROPOUT {}".format(regularizer, dropout))
+            simple_classifier_results = test_nn(
+                simple_classifier, 
+                data, 
+                'simple_classifier', 
+                test_params, 
+                model_params["optimizers"], 
+                model_params["learning_rates"], 
+                regularizer,
+                dropout,
+                verbose=verbose
+            )
+            if verbose:
+                print("MLP - REGULARIZER {}, DROPOUT {}".format(regularizer, dropout))
+            mlp_results = test_nn(
+                mlp, 
+                data, 
+                'mlp', 
+                test_params, 
+                model_params["optimizers"], 
+                model_params["learning_rates"],
+                regularizer,
+                dropout,  
+                verbose=verbose
+            )
+
+            all_simple_results = all_simple_results + simple_classifier_results
+            all_mlp_results = all_mlp_results + mlp_results
+
+    plot_nn_heatmap(all_simple_results, plot_type="regularization", save_fig=True)
+    plot_nn_heatmap(all_mlp_results, plot_type="regularization", save_fig=True)
+
+    return all_simple_results, all_mlp_results
+
+
+def test_nn_test_params(data, model_params=None, test_params=None, verbose=False):
+    """
+    """
+    if not model_params:
+        model_params = {
+            "learning_rates": 0.01,
+            "optimizers": "adam",
+            "regularizer": None,
         }
     if not test_params:
         test_params = {
@@ -177,15 +270,39 @@ def test_nn_test_params(data, model_params=None, test_params=None):
         }
     
     # Build the models
-    simple_classifier = build_simple_classifier(data["X_train"], learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"])
-    mlp = build_mlp(data["X_train"], learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"])
+    simple_classifier = build_simple_classifier(
+        data["X_train"], 
+        learning_rate=model_params["learning_rates"], 
+        optimizer=model_params["optimizers"]
+    )
+    mlp = build_mlp(
+        data["X_train"], 
+        learning_rate=model_params["learning_rates"], 
+        optimizer=model_params["optimizers"]
+    )
 
     # Test the model
-    simple_classifier_results = test_nn(simple_classifier, data, 'simple_classifier', test_params, learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"], verbose=True)
-    mlp_results = test_nn(mlp, data, 'mlp', test_params, learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"], verbose=True)
+    simple_classifier_results = test_nn(
+        simple_classifier, 
+        data, 
+        'simple_classifier', 
+        test_params, 
+        learning_rate=model_params["learning_rates"], 
+        optimizer=model_params["optimizers"], 
+        verbose=verbose
+    )
+    mlp_results = test_nn(
+        mlp, 
+        data, 
+        'mlp', 
+        test_params, 
+        learning_rate=model_params["learning_rates"], 
+        optimizer=model_params["optimizers"], 
+        verbose=verbose
+    )
 
-    plot_nn_heatmap(simple_classifier_results, save_fig=True)
-    plot_nn_heatmap(mlp_results, save_fig=True)
+    plot_nn_heatmap(simple_classifier_results, plot_type="test", save_fig=True)
+    plot_nn_heatmap(mlp_results, plot_type="test", save_fig=True)
     return simple_classifier_results, mlp_results
 
 
@@ -208,12 +325,13 @@ def main(**kwargs):
     data = get_data(data_choice=kwargs["data_choice"])
 
     # Test nn parameters
-    simple_classifier_model_results, mlp_model_results = test_nn_model_params(data)
-    simple_classifier_test_results, mlp_test_results = test_nn_test_params(data)
-    
+    simple_classifier_lr_opt_results, mlp_lt_opt_results = test_nn_optimizer(data, verbose=True)
+    simple_classifier_reg_results, mlp_reg_results = test_nn_reg(data, verbose=True)
+    simple_classifier_test_results, mlp_test_results = test_nn_test_params(data, verbose=True)
+
     # Concatenate results
-    simple_classifier_results = simple_classifier_model_results + simple_classifier_test_results
-    mlp_results = mlp_model_results + mlp_test_results
+    simple_classifier_results = simple_classifier_lr_opt_results + simple_classifier_reg_results + simple_classifier_test_results
+    mlp_results = mlp_lt_opt_results + mlp_reg_results + mlp_test_results
 
     # Test SVM
     svm_classifier = build_svm()

@@ -3,8 +3,10 @@ import logging
 # import models, layers, and optimizers from keras
 from keras.backend import set_session
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, SimpleRNN
+from keras.layers import LSTM, Dense, SimpleRNN, Dropout
 from keras.optimizers import SGD, Adam, RMSprop, Adagrad, Adadelta, Adamax, Nadam
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras import regularizers
 
 # Import scikit-learn helpers
 from sklearn.model_selection import train_test_split
@@ -40,9 +42,13 @@ def model_predict(model_name, model, data, **kwargs):
     return metrics
 
 
-def build_simple_classifier(X_train, learning_rate=0.001, optimizer="adam"):
+def build_simple_classifier(X_train, learning_rate=0.01, optimizer="adam", regularizer=None, dropout=False):
     """
     """
+    # Set up regularization
+    if regularizer:
+        regularizer_obj = regularizers.l2(regularizer)
+
     # Set up optimizer
     if optimizer == "adam":
         opt = Adam(learning_rate=learning_rate)
@@ -60,13 +66,22 @@ def build_simple_classifier(X_train, learning_rate=0.001, optimizer="adam"):
         opt = Nadam(learning_rate=learning_rate)
 
     model = Sequential()
-    model.add(Dense(12, input_dim=X_train.shape[1], activation='relu'))
+    model.add(Dense(
+        12, 
+        input_dim=X_train.shape[1], 
+        activation='relu',
+        kernel_regularizer=regularizer_obj,
+        )
+    )
+    if dropout:
+        model.add(Dropout(0.5))
+
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
     return model
 
 
-def build_mlp(X_train, learning_rate=0.001, optimizer="adam"):
+def build_mlp(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, dropout=False):
     """
     """
     # Set up nodes
@@ -76,6 +91,10 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam"):
     # Set up parameters
     activation_function = "sigmoid"
     loss = "binary_crossentropy"
+
+    # Set up regularization
+    if regularizer:
+        regularizer_obj = regularizers.l2(regularizer)
 
     # Set up optimizer
     if optimizer == "adam":
@@ -99,28 +118,37 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam"):
         hidden_nodes,
         activation=activation_function,
         input_dim=X_train.shape[1],
+        kernel_regularizer=regularizer_obj,
         use_bias=False,
     ))
     model.add(Dense(
         2*hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizer_obj,
         use_bias=False,
     ))
     model.add(Dense(
         4*hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizer_obj,
         use_bias=False,
     ))
     model.add(Dense(
         6*hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizer_obj,
         use_bias=False,
     ))
     model.add(Dense(
         8*hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizer_obj,
         use_bias=False,
     ))
+
+    # Dropout layer
+    if dropout:
+        model.add(Dropout(0.5))
 
     # Output layer
     model.add(Dense(output_nodes, activation=activation_function, use_bias=False))
@@ -131,7 +159,7 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam"):
     return model
 
 
-def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.001, verbose=False):
+def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.001, regularization=None, dropout=False, verbose=False):
     """
     """
     results = []
@@ -154,6 +182,8 @@ def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.0
             classifier_results["test_params"] = test_params
             classifier_results["test_params"]["optimizer"] = optimizer
             classifier_results["test_params"]["learning_rate"] = learning_rate
+            classifier_results["test_params"]["regularization"] = regularization
+            classifier_results["test_params"]["dropout"] = dropout
             results.append(classifier_results)
     return results
 

@@ -42,7 +42,7 @@ def model_predict(model_name, model, data, **kwargs):
     return metrics
 
 
-def build_simple_classifier(X_train, learning_rate=0.01, optimizer="adam", regularizer=None, dropout=False):
+def build_simple_classifier(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, dropout=False):
     """
     """
     # Set up regularization
@@ -163,7 +163,7 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, 
     return model
 
 
-def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.001, regularization=None, dropout=False, verbose=False):
+def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.01, regularization=None, dropout=False, verbose=False):
     """
     """
     results = []

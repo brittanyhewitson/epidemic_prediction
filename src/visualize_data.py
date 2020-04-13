@@ -213,7 +213,7 @@ def plot_nn_heatmap(results, plot_type="test", save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig(f"output_images/{filename}_heatmap.png")
-    plt.show()
+    #plt.show()
     plt.clf()
 
 
@@ -226,7 +226,7 @@ def plot_history(results, save_fig=False):
         plt.plot(range(1, (len(history.history['val_accuracy'])+1)), history.history['val_accuracy'])
         #plt.ylim((0.5, 1.0))
         title = result["name"].replace("_", " ")
-        plt.title('{} accuracy for epochs={} batch_size={}'.format(title, result["params"]["epochs"], result["params"]["batch_size"]))
+        plt.title('{} accuracy for epochs={} batch_size={}'.format(title, result["test_params"]["epochs"], result["test_params"]["batch_size"]))
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
         plt.legend(['train', 'test'], loc='upper right')
@@ -237,7 +237,8 @@ def plot_history(results, save_fig=False):
                 os.makedirs("output_images")
             filename = result["name"]
             plt.savefig(f"output_images/{filename}_history.png")
-        plt.show()
+        #plt.show()
+        plt.clf()
 
 
 def plot_knn_bar(results, save_fig=False):
@@ -257,7 +258,7 @@ def plot_knn_bar(results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/knn_bar.png")
-    plt.show()
+    #plt.show()
     plt.clf()
 	
 
@@ -278,7 +279,7 @@ def plot_rf_bar(results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/rf_bar.png")
-    plt.show()
+    #plt.show()
     plt.clf()	
     
 
@@ -305,7 +306,7 @@ def plot_all_results(all_results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/all_classifiers.png")
-    plt.show()
+    #plt.show()
     plt.clf()
 
 
@@ -324,7 +325,7 @@ def plot_accuracy_by_date(dates, results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/accuracy_by_date.png")
-    plt.show()
+    #plt.show()
     plt.clf()
 
 
@@ -352,7 +353,7 @@ def plot_accuracy_by_date_subplot(dates, results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/accuracy_by_date.png")
-    plt.show()
+    #plt.show()
     plt.clf()
 
 

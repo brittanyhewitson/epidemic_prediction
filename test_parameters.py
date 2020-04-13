@@ -65,6 +65,7 @@ def test_by_date(params=None, verbose=False):
     # Set up empty variables
     best_results = {
         "simple_classifier": [],
+        "mlp": [],
         "svm": [],
         "knn": [],
         "rf": []
@@ -259,7 +260,7 @@ def test_nn_test_params(data, model_params=None, test_params=None, verbose=False
     """
     if not model_params:
         model_params = {
-            "learning_rates": 0.01,
+            "learning_rates": 0.001,
             "optimizers": "adam",
             "regularizer": None,
         }
@@ -306,6 +307,38 @@ def test_nn_test_params(data, model_params=None, test_params=None, verbose=False
     return simple_classifier_results, mlp_results
 
 
+def test_nn_epochs(data, verbose=False):
+    """
+    """
+    params = {
+        "epochs": [1000],
+        "batch_size": [500]
+    }
+
+    # Build the models
+    simple_classifier = build_simple_classifier(data["X_train"])
+    mlp = build_mlp(data["X_train"])
+
+    simple_classifier_results = test_nn(
+        simple_classifier, 
+        data, 
+        'simple_classifier', 
+        params, 
+        verbose=verbose,
+    )
+    mlp_results = test_nn(
+        mlp, 
+        data, 
+        'mlp', 
+        params, 
+        verbose=verbose,
+    )
+
+    # Visualize the results
+    plot_history(simple_classifier_results, save_fig=True)
+    plot_history(mlp_results, save_fig=True)
+
+
 @click.command()
 @click.option("--gpu", is_flag=True)
 @click.option("--data_choice", default="small_data", type=click.Choice(DATA_CHOICES))
@@ -315,7 +348,7 @@ def main(**kwargs):
     setup_gpu(kwargs["gpu"])
 
     # Test data by the date
-    date_results = test_by_date()
+    date_results = test_by_date(verbose=True)
 
     # Set up paramters
     neighbours = [1, 5, 10, 50, 100, 200, 500]
@@ -332,6 +365,9 @@ def main(**kwargs):
     # Concatenate results
     simple_classifier_results = simple_classifier_lr_opt_results + simple_classifier_reg_results + simple_classifier_test_results
     mlp_results = mlp_lt_opt_results + mlp_reg_results + mlp_test_results
+
+    # Test neural net with high epochs
+    test_nn_epochs(data, verbose=False)
 
     # Test SVM
     svm_classifier = build_svm()

@@ -95,6 +95,8 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, 
     # Set up regularization
     if regularizer:
         regularizer_obj = regularizers.l2(regularizer)
+    else: 
+        regularizer_obj = None
 
     # Set up optimizer
     if optimizer == "adam":

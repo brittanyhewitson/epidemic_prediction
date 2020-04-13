@@ -315,7 +315,7 @@ def main(**kwargs):
     setup_gpu(kwargs["gpu"])
 
     # Test data by the date
-    #date_results = test_by_date()
+    date_results = test_by_date()
 
     # Set up paramters
     neighbours = [1, 5, 10, 50, 100, 200, 500]

@@ -61,7 +61,7 @@ def plot_imbalance(zika_percent, non_zika_percent, data_type="input data", save_
     plt.show()
 
 
-def view_data_balance(X, y, data_type):
+def view_data_balance(X, y, data_type, save_fig=False):
     """
     """
     # Find the two classes
@@ -83,7 +83,7 @@ def view_data_balance(X, y, data_type):
     print(f"Total number of rows: {all_len}")
 
     # Show plot
-    plot_imbalance(zika_percent, non_zika_percent, data_type=data_type, save_fig=True)
+    plot_imbalance(zika_percent, non_zika_percent, data_type=data_type, save_fig=save_fig)
 
 
 def plot_averages(df, save_fig=False):
@@ -371,16 +371,16 @@ def main():
 
     # DATA VISUALUZATION
     # Plot data balance for large dataset
-    view_data_balance(X, y, data_type="input data")
+    view_data_balance(X, y, data_type="input data", save_fig=True)
 
     # Plot balance for small dataset
-    view_data_balance(X_small, y_small, data_type="small dataset")
+    view_data_balance(X_small, y_small, data_type="small dataset", save_fig=True)
 
     # Plot the averages for each data column
-    plot_averages(all_data)
+    plot_averages(all_data, save_fig=True)
 
     # Look at correlation between features and the number of cases
-    plot_feature_output_correlation(all_data)
+    plot_feature_output_correlation(all_data, save_fig=True)
     
 
 if __name__=='__main__':

@@ -48,6 +48,8 @@ def build_simple_classifier(X_train, learning_rate=0.01, optimizer="adam", regul
     # Set up regularization
     if regularizer:
         regularizer_obj = regularizers.l2(regularizer)
+    else: 
+        regularizer_obj = None
 
     # Set up optimizer
     if optimizer == "adam":

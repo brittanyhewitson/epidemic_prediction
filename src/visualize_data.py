@@ -1,80 +1,26 @@
 import os
 import dill
-import pandas as pd
+
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-from sklearn.ensemble import ExtraTreesClassifier
+import matplotlib.pyplot as plt
+
 from operator import itemgetter
+from sklearn.ensemble import ExtraTreesClassifier
+
+from src.templates import (
+    TEMP_FIELDS,
+    PRECIP_FIELDS,
+    DISTANCES_FIELDS,
+)
+
+from src.helpers import (
+    cast_to_bool,
+
+)
 
 sns.set()
-
-ZIKA_DATAFIELD_TO_KEEP = [
-    "zika_confirmed_laboratory",
-    "zika_reported_local",
-    "total_zika_confirmed_autochthonous",
-    #"total_zika_confirmed_imported",
-    "zika_lab_positive",
-    "cumulative_confirmed_local_cases",
-    #"weekly_zika_confirmed",
-    "gbs_confirmed_cumulative",
-]
-
-TEMP_FIELDS = [
-    "max_temp", 
-    "max_temp1", 
-    "max_temp2",
-    "mean_temp",
-    "mean_temp1",
-    "mean_temp2",
-    "min_temp",
-    "min_temp1",
-    "min_temp2",
-    "dew_point",
-    "dew_point1",
-    "dew_point2"
-]
-
-PRECIP_FIELDS = [
-    "precipitation",
-    "precipitation1",
-    "precipitation2"
-]
-
-DISTANCES_FIELDS = [
-    "airport_dist_any",
-    "airport_dist_large",
-    "mosquito_dist"
-]
-
-
-
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# HELPERS
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-def get_data_field(df):
-    """
-    """
-    return df["data_field"] in ZIKA_DATAFIELD_TO_KEEP
-
-
-def cast_to_bool(zika_cases):
-    """
-    """
-    if zika_cases > 0:
-        return 1
-    else:
-        return 0
-
-
-def clean_zika_data(zika_cases):
-    """
-    """
-    # Only keep the desired data fields
-    zika_cases = zika_cases[zika_cases.apply(get_data_field, axis=1)].reset_index()
-    return zika_cases
 
 
 def create_hor_bar(df, save_fig=False, title=None):
@@ -92,6 +38,7 @@ def create_hor_bar(df, save_fig=False, title=None):
     # Show the bar plot and clear the figure afterwards
     plt.show()
     plt.clf()
+
 
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
@@ -114,7 +61,7 @@ def plot_imbalance(zika_percent, non_zika_percent, data_type="input data", save_
     plt.show()
 
 
-def view_data_balance(X, y, data_type):
+def view_data_balance(X, y, data_type, save_fig=False):
     """
     """
     # Find the two classes
@@ -136,7 +83,8 @@ def view_data_balance(X, y, data_type):
     print(f"Total number of rows: {all_len}")
 
     # Show plot
-    plot_imbalance(zika_percent, non_zika_percent, data_type=data_type, save_fig=True)
+    plot_imbalance(zika_percent, non_zika_percent, data_type=data_type, save_fig=save_fig)
+
 
 def plot_averages(df, save_fig=False):
     """
@@ -169,7 +117,7 @@ def plot_feature_output_correlation(all_data, save_fig=False):
     
     # Try simple correlation
     corrmat = all_data.corr()
-    plt.subplots(figsize=(20,15))
+    plt.subplots(figsize=(17,17))
     sns.heatmap(
         corrmat, 
         cmap=sns.color_palette("RdBu_r"), 
@@ -202,7 +150,6 @@ def plot_feature_output_correlation(all_data, save_fig=False):
         plt.savefig("output_images/feature_correlation.png")
     plt.show()
     plt.clf()
-    
 
 
 # -----------------------------------------------------------------------------
@@ -210,60 +157,45 @@ def plot_feature_output_correlation(all_data, save_fig=False):
 # RESULTS
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
-def plot_simple_classifier_scatter(results, save_fig=False):
-    """
-    Don't use in script anymore
-    """
-    # Scatter plot for all variations
-    accuracies = []
-    batches = []
-    epochs = []
-    n=0
-    for result in results:
-        accuracies.append(round(result["accuracy"]*10, 2))
-        batches.append(result["params"]["batch_size"])
-        epochs.append(result["params"]["epochs"])
-    
-    # Normalize the accuracies
-    min_val = min(accuracies)
-    max_val = max(accuracies)
-    normalized = np.round((accuracies-min_val)/(max_val-min_val), 2)*100
-    
-    title = results[0]["name"].replace("_", " ")
-    fig, ax = plt.subplots()
-    scatter = ax.scatter(batches, epochs, s=normalized)
-    handles, labels = scatter.legend_elements(prop="sizes", alpha=0.5)
-    legend = ax.legend(handles, labels, loc="upper right", title="Sizes")
-    plt.xlabel("Number of Batches")
-    plt.ylabel("Number of Epochs")
-    plt.title(f"Accuracy for {title}")
-    if save_fig:
-        # If the output directory does not yet exist
-        if not os.path.exists("output_images"):
-            os.makedirs("output_images")
-        filename = results[0]["name"]
-        plt.savefig(f"output_images/{filename}_scatter.png")
-    plt.show()
-    plt.clf()
-
-
-def plot_simple_classifier_heatmap(results, save_fig=False):
+def plot_nn_heatmap(results, plot_type="test", save_fig=False):
     """
     """
-
     accuracies = list(map(itemgetter("accuracy"), results))
-    params = list(map(itemgetter("params"), results))
+    params = list(map(itemgetter("test_params"), results))
+    learning_rates = list(map(itemgetter("learning_rate"), params))
+    optimizers = list(map(itemgetter("optimizer"), params))
     epochs = list(map(itemgetter("epochs"), params))
-    batches = list(map(itemgetter("batch_size"), params))
+    batch_size = list(map(itemgetter("batch_size"), params))
+    regularizer = list(map(itemgetter("regularization"), params))
+    dropout = list(map(itemgetter("dropout"), params))
 
-    df = pd.DataFrame({
-        "accuracy": accuracies,
-        "epochs": epochs,
-        "batch_size": batches
-    })
-
-    df = df.drop_duplicates()
-    pivotted = df.pivot("batch_size", "epochs", "accuracy")
+    if plot_type == "test":
+        df = pd.DataFrame({
+            "accuracy": accuracies,
+            "epochs": epochs,
+            "batch_size": batch_size
+        })
+        df = df.drop_duplicates()
+        pivotted = df.pivot("batch_size", "epochs", "accuracy")
+        filename = "{}_{}_{}".format(results[0]["name"], learning_rates[0], optimizers[0])
+    elif plot_type == "regularization":
+        df = pd.DataFrame({
+            "accuracy": accuracies,
+            "regularization": regularizer,
+            "dropout": dropout
+        })
+        df = df.drop_duplicates(subset=["regularization", "dropout"])
+        pivotted = df.pivot("dropout", "regularization", "accuracy")
+        filename = "{}_{}_{}_{}_{}".format(results[0]["name"], epochs[0], batch_size[0], learning_rates[0], optimizers[0])
+    elif plot_type == "optimizer":
+        df = pd.DataFrame({
+            "accuracy": accuracies,
+            "learning_rate": learning_rates,
+            "optimizer": optimizers
+        })
+        df = df.drop_duplicates(subset=["learning_rate", "optimizer"])
+        pivotted = df.pivot("learning_rate", "optimizer", "accuracy")
+        filename = "{}_{}_{}".format(results[0]["name"], epochs[0], batch_size[0])
 
     sns.heatmap(
         pivotted, 
@@ -280,42 +212,9 @@ def plot_simple_classifier_heatmap(results, save_fig=False):
         # If the output directory does not yet exist
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
-        filename = results[0]["name"]
         plt.savefig(f"output_images/{filename}_heatmap.png")
-    plt.show()
+    #plt.show()
     plt.clf()
-    
-
-def plot_simple_classifier_bar(results, save_fig=False):
-    """
-    Don't use in script anymore
-    """
-    # Bar plot for each parameter tested for simple classifier
-    contraints = list(set(map(itemgetter("varied"), results)))
-    
-    # Make bar plots
-    for constraint in contraints:
-        accuracies = []
-        labels = []
-        for result in results:
-            if result["varied"] == constraint:
-                accuracies.append(round(result["accuracy"], 2))
-                labels.append(result["params"][constraint])
-        
-        # Create the plot
-        plt.bar(list(map(str, labels)), accuracies)
-        plt.xlabel(constraint)
-        plt.ylabel("Accuracy")
-        plt.title("Accuracy by {}".format(constraint.strip("s").replace("_", " ")))
-        plt.tight_layout()
-        if save_fig:
-            # If the output directory does not yet exist
-            if not os.path.exists("output_images"):
-                os.makedirs("output_images")
-            filename = results[0]["name"]
-            plt.savefig(f"output_images/{filename}_bar.png")
-        plt.show()
-        plt.clf()
 
 
 def plot_history(results, save_fig=False):
@@ -327,7 +226,7 @@ def plot_history(results, save_fig=False):
         plt.plot(range(1, (len(history.history['val_accuracy'])+1)), history.history['val_accuracy'])
         #plt.ylim((0.5, 1.0))
         title = result["name"].replace("_", " ")
-        plt.title('{} accuracy for epochs={} batch_size={}'.format(title, result["params"]["epochs"], result["params"]["batch_size"]))
+        plt.title('{} accuracy for epochs={} batch_size={}'.format(title, result["test_params"]["epochs"], result["test_params"]["batch_size"]))
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
         plt.legend(['train', 'test'], loc='upper right')
@@ -338,7 +237,8 @@ def plot_history(results, save_fig=False):
                 os.makedirs("output_images")
             filename = result["name"]
             plt.savefig(f"output_images/{filename}_history.png")
-        plt.show()
+        #plt.show()
+        plt.clf()
 
 
 def plot_knn_bar(results, save_fig=False):
@@ -358,9 +258,10 @@ def plot_knn_bar(results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/knn_bar.png")
-    plt.show()
+    #plt.show()
     plt.clf()
 	
+
 def plot_rf_bar(results, save_fig=False):
     """
     """
@@ -378,7 +279,7 @@ def plot_rf_bar(results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/rf_bar.png")
-    plt.show()
+    #plt.show()
     plt.clf()	
     
 
@@ -405,7 +306,7 @@ def plot_all_results(all_results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/all_classifiers.png")
-    plt.show()
+    #plt.show()
     plt.clf()
 
 
@@ -424,48 +325,63 @@ def plot_accuracy_by_date(dates, results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/accuracy_by_date.png")
-    plt.show()
+    #plt.show()
+    plt.clf()
+
+
+def plot_accuracy_by_date_subplot(dates, results, save_fig=False):
+    """
+    """
+    num_plots = len(results)
+    fig, axs = plt.subplots(num_plots, sharex=True, sharey=True, figsize=(15,10))
+    i = 0
+    for key, val in results.items():
+        axs[i].plot(dates, val, label=key)
+        axs[i].set_title(key.replace("_", " "))
+        i += 1
+
+    plt.xlabel("Date")
+    plt.xticks(rotation=90)
+    
+    for ax in axs.flat:
+        ax.label_outer()
+
+    fig.text(0.002, 0.5, 'Accuracy (%)', va='center', rotation='vertical')
+    plt.tight_layout()
+    if save_fig:
+        # If the output directory does not yet exist
+        if not os.path.exists("output_images"):
+            os.makedirs("output_images")
+        plt.savefig("output_images/accuracy_by_date.png")
+    #plt.show()
     plt.clf()
 
 
 def main():
     # READ DATA
     #zika_cases = pd.read_csv("csv_data/03_infection_data_final.csv")
-    all_data = pd.read_csv("csv_data/07_feature_engineering_and_cleaning.csv")
+    all_data = pd.read_csv("../csv_data/07_feature_engineering_and_cleaning.csv")
     X = all_data.drop(["location", "date", "zika_cases"], axis=1).values
     y = all_data["zika_cases"].values
     
     # Read the small dataset
-    with open("csv_data/X.pkl", "rb") as f:
+    with open("../csv_data/X.pkl", "rb") as f:
         X_small = dill.load(f)
-    with open("csv_data/y.pkl", "rb") as f:
+    with open("../csv_data/y.pkl", "rb") as f:
         y_small = dill.load(f)
-
 
     # DATA VISUALUZATION
     # Plot data balance for large dataset
-    view_data_balance(X, y, data_type="input data")
+    view_data_balance(X, y, data_type="input data", save_fig=True)
 
     # Plot balance for small dataset
-    view_data_balance(X_small, y_small, data_type="small dataset")
+    view_data_balance(X_small, y_small, data_type="small dataset", save_fig=True)
 
     # Plot the averages for each data column
-    plot_averages(all_data)
+    plot_averages(all_data, save_fig=True)
 
     # Look at correlation between features and the number of cases
-    plot_feature_output_correlation(all_data)
-
-    # Geographically look at the cities included in the data set
-    # TODO???
-
-    # Weather visualization
-    # TODO???
-
-    # Geographical visualization of population density
-    # TODO???
-
-    # Geographical representation of mosquito sightings
-    # TODO???
+    plot_feature_output_correlation(all_data, save_fig=True)
     
 
 if __name__=='__main__':

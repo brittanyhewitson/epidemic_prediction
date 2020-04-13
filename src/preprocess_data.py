@@ -3,17 +3,25 @@ import re
 import sys
 import dill
 import logging
-from sklearn.utils import resample
-from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTENC
-from collections import Counter
+
 import numpy as np
 import pandas as pd
-
 import matplotlib.pyplot as plt
 
-from visualize_data import (
+from operator import itemgetter
+from imblearn.over_sampling import SMOTENC
+from sklearn.model_selection import train_test_split
+
+from src.visualize_data import (
     view_data_balance,
+)
+from src.helpers import (
+    cast_to_bool,
+)
+from src.templates import (
+    RANDOM_SEED,
+    DATA_CHOICES,
+    REGEX,
 )
 
 '''
@@ -24,27 +32,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 '''
-
-# Set the random seed for splitting data
-RANDOM_SEED = 123
-
-REGEX = r"^\d+-\d+-\d+.csv$"
-
-DATA_CHOICES = [
-    "big_data",
-    "small_data",
-    "smote",
-    "by_date",
-]
-
-def cast_to_bool(zika_cases):
-    """
-    """
-    if zika_cases > 0:
-        return 1
-    else:
-        return 0
-
 
 def get_x_y(all_data, drop_categories=True):
     """
@@ -61,30 +48,28 @@ def get_x_y(all_data, drop_categories=True):
 def get_data(data_choice="small_data"):
     """
     """
+    # Set up the filepath
+    if os.getcwd().endswith("src"):
+        filepath = "../csv_data"
+    else:
+        filepath = "csv_data"
+
     # Check that the data choice is valid
     if data_choice not in DATA_CHOICES:
         raise Exception(f"Unrecognized data choice, please make sure data choice is from {DATA_CHOICES}")
     
     # Read dataset
-    if data_choice == "big_data":
-        # Read the big input data set
-        all_data = pd.read_csv("csv_data/07_feature_engineering_and_cleaning.csv")
-        all_data["zika_cases"] = all_data["zika_cases"].apply(cast_to_bool)
-        X, y = get_x_y(all_data)
-    elif data_choice == "smote":
-        # Read data balanced with smote
-        all_data = pd.read_csv("csv_data/all_smote_data.csv")
-        all_data["zika_cases"] = all_data["zika_cases"].apply(cast_to_bool)
-        X, y = get_x_y(all_data)
-    elif data_choice == "small_data":
+    if data_choice == "small_data":
+        full_path_X = os.path.join(filepath, "X.pkl")
+        full_path_y = os.path.join(filepath, "y.pkl")
         # Read the small dataset
-        with open("csv_data/X.pkl", "rb") as f:
+        with open(full_path_X, "rb") as f:
             X = dill.load(f)
-        with open("csv_data/y.pkl", "rb") as f:
+        with open(full_path_y, "rb") as f:
             y = dill.load(f)
     elif data_choice == "by_date":
         by_date_data = []
-        directory = os.path.join(os.getcwd(), "csv_data", "smote_by_date")
+        directory = os.path.join(filepath, "smote_by_date")
         for filename in os.listdir(directory):
             if re.match(REGEX, filename, re.I):
                 full_path = os.path.join(directory, filename)
@@ -111,7 +96,19 @@ def get_data(data_choice="small_data"):
 
                 # Add to list
                 by_date_data.append(data)
+        # Sort according to date
+        by_date_data = sorted(by_date_data, key=itemgetter('date'), reverse=False)
         return by_date_data
+    else:
+        if data_choice == "big_data":
+            full_path = os.path.join(filepath, "07_feature_engineering_and_cleaning.csv")
+        elif data_choice == "smote":
+            full_path = os.path.join(filepath, "all_smote_data.csv")
+        
+        # Read input data
+        all_data = pd.read_csv(full_path)
+        all_data["zika_cases"] = all_data["zika_cases"].apply(cast_to_bool)
+        X, y = get_x_y(all_data)
 
     # Split into training and testing
     X_train, X_test, y_train, y_test = train_test_split(
@@ -132,7 +129,7 @@ def get_data(data_choice="small_data"):
         "y_test": y_test,
     }
 
-    return [data]
+    return data
 
 
 def smote(data, save_data=False, filename=None, view_plots=True):
@@ -175,7 +172,7 @@ def smote(data, save_data=False, filename=None, view_plots=True):
     #print(len(all_smote_data))
     
     if save_data:
-        smote_data.to_csv(f"csv_data/{filename}.csv", index=False)
+        smote_data.to_csv(f"../csv_data/{filename}.csv", index=False)
     
     return smote_data
 
@@ -191,7 +188,7 @@ def smote_by_date(all_data, save_data=False):
         logging.info(f"Balancing {name}")
         smote_data = smote(
             group,
-            save_data=True,
+            save_data=save_data,
             filename=os.path.join("smote_by_date", name),
             view_plots=False
         )
@@ -199,7 +196,7 @@ def smote_by_date(all_data, save_data=False):
 
 def main():
     # Read in the data
-    all_data = pd.read_csv("csv_data/07_feature_engineering_and_cleaning.csv")
+    all_data = pd.read_csv("../csv_data/07_feature_engineering_and_cleaning.csv")
     all_data["zika_cases"] = all_data["zika_cases"].apply(cast_to_bool)      
 
     # Oversample using SMOTE by date

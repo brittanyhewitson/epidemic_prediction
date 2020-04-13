@@ -157,13 +157,20 @@ def plot_feature_output_correlation(all_data, save_fig=False):
 # RESULTS
 # -----------------------------------------------------------------------------
 # -----------------------------------------------------------------------------
+def plot_nn_model_heatmap(results, save_fig=False):
+    """
+    """
+
+
 def plot_nn_heatmap(results, save_fig=False):
     """
     """
     accuracies = list(map(itemgetter("accuracy"), results))
-    params = list(map(itemgetter("params"), results))
+    params = list(map(itemgetter("test_params"), results))
     epochs = list(map(itemgetter("epochs"), params))
     batches = list(map(itemgetter("batch_size"), params))
+    optimizer = list(map(itemgetter("optimizer"), params))
+    learning_rate = list(map(itemgetter("learning_rate"), params))
 
     df = pd.DataFrame({
         "accuracy": accuracies,
@@ -189,8 +196,48 @@ def plot_nn_heatmap(results, save_fig=False):
         # If the output directory does not yet exist
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
-        filename = results[0]["name"]
+        filename = "{}_{}_{}".format(results[0]["name"], learning_rate[0], optimizer[0])
         plt.savefig(f"output_images/{filename}_heatmap.png")
+    plt.show()
+    plt.clf()
+
+
+def plot_nn_model_params(results, save_fig=False):
+    """
+    """
+    accuracies = list(map(itemgetter("accuracy"), results))
+    params = list(map(itemgetter("test_params"), results))
+    learning_rates = list(map(itemgetter("learning_rate"), params))
+    optimizers = list(map(itemgetter("optimizer"), params))
+    epochs = list(map(itemgetter("epochs"), params))
+    batch_size = list(map(itemgetter("batch_size"), params))
+
+    df = pd.DataFrame({
+        "accuracy": accuracies,
+        "learning_rate": learning_rates,
+        "optimizer": optimizers
+    })
+
+    df = df.drop_duplicates(subset=["learning_rate", "optimizer"])
+    pivotted = df.pivot("learning_rate", "optimizer", "accuracy")
+
+    sns.heatmap(
+        pivotted, 
+        cmap=sns.color_palette("RdBu_r"), 
+        square=True, 
+        #annot=True, 
+        #annot_kws={"size": 10}, 
+        #vmin=0.6
+        )
+    title = results[0]["name"].replace("_", " ")
+    plt.title(title)
+    plt.tight_layout()
+    if save_fig:
+        # If the output directory does not yet exist
+        if not os.path.exists("output_images"):
+            os.makedirs("output_images")
+        filename = "{}_{}_{}".format(results[0]["name"], epochs[0], batch_size[0])
+        plt.savefig(f"output_images/{filename}_heatmap_model.png")
     plt.show()
     plt.clf()
 

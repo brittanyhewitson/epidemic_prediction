@@ -25,6 +25,7 @@ from src.models import (
 )
 from src.visualize_data import (
     plot_nn_heatmap,
+    plot_nn_model_params,
     plot_history,
     plot_knn_bar,
     plot_rf_bar,
@@ -113,7 +114,7 @@ def test_by_date(params=None):
         rf_results = test_rf(data, params["estimators"], verbose=True)
 
         # Visualize results
-        all_results = [simple_classifier_results, [svm_results], knn_results, rf_results]			
+        all_results = [simple_classifier_results, mlp_results, [svm_results], knn_results, rf_results]			
         # Sort all results
         for result_list in all_results:
             # Sort according to accuracy
@@ -122,11 +123,11 @@ def test_by_date(params=None):
             best_results[result["name"]].append(result["accuracy"]*100)
 
         dates.append(data["date"])
-    plot_accuracy_by_date_subplot(dates, best_results)
+    plot_accuracy_by_date_subplot(dates, best_results, save_fig=True)
     return best_results
 
 
-def test_nn_params(data, model_params=None, test_params=None):
+def test_nn_model_params(data, model_params=None, test_params=None):
     """
     """
     if not model_params:
@@ -136,19 +137,56 @@ def test_nn_params(data, model_params=None, test_params=None):
         }
     if not test_params:
         test_params = {
-            "epochs": [1, 5, 10, 50, 100, 500, 1000, 5000],
-            "batch_size": [1, 5, 10, 50, 100, 500, 1000]
+            "epochs": [100],
+            "batch_size": [500]
         }
     
+    all_simple_results = []
     all_mlp_results = []
     for learning_rate in model_params["learning_rates"]:
         for optimizer in model_params["optimizers"]:
-            # Build the model
+            # Build the models
+            simple_classifier = build_simple_classifier(data["X_train"], learning_rate=learning_rate, optimizer=optimizer)
             mlp = build_mlp(data["X_train"], learning_rate=learning_rate, optimizer=optimizer)
 
             # Test the model
-            mlp_results = test_nn(mlp, data, 'mlp', test_params, verbose=True)
+            simple_classifier_results = test_nn(simple_classifier, data, 'simple_classifier', test_params, optimizer, learning_rate, verbose=True)
+            mlp_results = test_nn(mlp, data, 'mlp', test_params, optimizer, learning_rate, verbose=True)
 
+            all_simple_results = all_simple_results + simple_classifier_results
+            all_mlp_results = all_mlp_results + mlp_results
+
+    plot_nn_model_params(all_simple_results, save_fig=True)
+    plot_nn_model_params(all_mlp_results, save_fig=True)
+
+    return all_simple_results, all_mlp_results
+
+
+def test_nn_test_params(data, model_params=None, test_params=None):
+    """
+    """
+    if not model_params:
+        model_params = {
+            "learning_rates": 0.01,
+            "optimizers": "adagrad"
+        }
+    if not test_params:
+        test_params = {
+            "epochs": [1, 5, 10, 50, 100],
+            "batch_size": [1, 5, 10, 50, 100]
+        }
+    
+    # Build the models
+    simple_classifier = build_simple_classifier(data["X_train"], learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"])
+    mlp = build_mlp(data["X_train"], learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"])
+
+    # Test the model
+    simple_classifier_results = test_nn(simple_classifier, data, 'simple_classifier', test_params, learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"], verbose=True)
+    mlp_results = test_nn(mlp, data, 'mlp', test_params, learning_rate=model_params["learning_rates"], optimizer=model_params["optimizers"], verbose=True)
+
+    plot_nn_heatmap(simple_classifier_results, save_fig=True)
+    plot_nn_heatmap(mlp_results, save_fig=True)
+    return simple_classifier_results, mlp_results
 
 
 @click.command()
@@ -160,46 +198,49 @@ def main(**kwargs):
     setup_gpu(kwargs["gpu"])
 
     # Test data by the date
-    date_results = test_by_date()
+    #date_results = test_by_date()
+
+    # Set up paramters
+    neighbours = [1, 5, 10, 50, 100, 200, 500]
+    estimators = [1, 5, 10, 50, 100, 200, 500]
 
     # Read input data
     data = get_data(data_choice=kwargs["data_choice"])
 
     # Test nn parameters
+    simple_classifier_model_results, mlp_model_results = test_nn_model_params(data)
+    simple_classifier_test_results, mlp_test_results = test_nn_test_params(data)
+    
+    # Concatenate results
+    simple_classifier_results = simple_classifier_model_results + simple_classifier_test_results
+    mlp_results = mlp_model_results + mlp_test_results
 
+    # Test SVM
+    svm_classifier = build_svm()
+    svm_results = model_predict(
+        "svm",
+        svm_classifier,
+        data
+    )
 
     # Test neighbours
-
+    knn_results = test_knn(data, neighbours)
 
     # Test estimators
+    rf_results = test_rf(data, estimators, verbose=True)
 
+    # TODO: Add SVM later for big data and small data?
 
+    # KNN    
+    plot_knn_bar(knn_results, save_fig=True)
 
-
-    if kwargs["show_all_plots"]:
-        # Simple classifier
-        plot_nn_heatmap(simple_classifier_results, save_fig=False)
-        plot_history(simple_classifier_results)
-
-        # MLP
-        plot_nn_heatmap(mlp_results, save_fig=False)
-        plot_history(mlp_results)
-
-        # TODO: Add SVM later for big data and small data
-
-        # KNN    
-        plot_knn_bar(knn_results, save_fig=False)
-
-        # RF
-        plot_rf_bar(rf_results, save_fig=True)
-        
-        # Compare Classifiers
-        all_results = [simple_classifier_results, [svm_results], knn_results, rf_results, mlp_results]
-        plot_all_results(all_results, save_fig=False) 
+    # RF
+    plot_rf_bar(rf_results, save_fig=True)
     
+    # Compare Classifiers
+    all_results = [simple_classifier_results, [svm_results], knn_results, rf_results, mlp_results]
+    plot_all_results(all_results, save_fig=True) 
+
     
-
-
-
 if __name__=='__main__':
     main()

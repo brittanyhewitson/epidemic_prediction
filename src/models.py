@@ -40,14 +40,29 @@ def model_predict(model_name, model, data, **kwargs):
     return metrics
 
 
-def build_simple_classifier(X_train):
+def build_simple_classifier(X_train, learning_rate=0.001, optimizer="adam"):
     """
     """
+    # Set up optimizer
+    if optimizer == "adam":
+        opt = Adam(learning_rate=learning_rate)
+    elif optimizer == "sgd":
+        opt = SGD(learning_rate=learning_rate)
+    elif optimizer == "rmsprop":
+        opt = RMSprop(learning_rate=learning_rate)
+    elif optimizer == "adagrad":
+        opt = Adagrad(learning_rate=learning_rate)
+    elif optimizer == "adadelta":
+        opt = Adadelta(learning_rate=learning_rate)
+    elif optimizer == "adamax":
+        opt = Adamax(learning_rate=learning_rate)
+    elif optimizer == "nadam":
+        opt = Nadam(learning_rate=learning_rate)
+
     model = Sequential()
     model.add(Dense(12, input_dim=X_train.shape[1], activation='relu'))
-    model.add(Dense(12, activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
     return model
 
 
@@ -111,12 +126,12 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam"):
     model.add(Dense(output_nodes, activation=activation_function, use_bias=False))
 
     # Compile the model
-    model.compile(loss=loss, optimizer=optimizer, metrics=['accuracy'])
+    model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])
 
     return model
 
 
-def test_nn(model, data, model_name, params, verbose=False):
+def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.001, verbose=False):
     """
     """
     results = []
@@ -136,7 +151,9 @@ def test_nn(model, data, model_name, params, verbose=False):
                     )
             if verbose:
                 print("accuracy for {}: {}".format(test_params, classifier_results["accuracy"]))
-            classifier_results["params"] = test_params
+            classifier_results["test_params"] = test_params
+            classifier_results["test_params"]["optimizer"] = optimizer
+            classifier_results["test_params"]["learning_rate"] = learning_rate
             results.append(classifier_results)
     return results
 

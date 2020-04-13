@@ -2,7 +2,9 @@
 from keras.backend import set_session
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, SimpleRNN
-from keras.optimizers import SGD, Adam
+from keras.optimizers import SGD, Adam, RMSprop, Adagrad, Adadelta, Adamax, Nadam
+from keras import regularizers
+#from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # Import scikit-learn helpers
 from sklearn.model_selection import train_test_split
@@ -84,21 +86,25 @@ def build_mlp(X_train):
     model.add(Dense(
         hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizers.l2(0.0001),	
         use_bias=False,
     ))
     model.add(Dense(
         hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizers.l2(0.0001),		
         use_bias=False,
     ))
     model.add(Dense(
         hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizers.l2(0.0001),	
         use_bias=False,
     ))
     model.add(Dense(
         hidden_nodes,
         activation=activation_function,
+        kernel_regularizer=regularizers.l2(0.0001),	
         use_bias=False,
     ))
 

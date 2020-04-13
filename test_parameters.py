@@ -1,10 +1,12 @@
 import os
+import re
 import sys
 import click
 import copy
 import logging
 
 import numpy as np
+import pandas as pd
 from operator import itemgetter
 
 from src.helpers import (
@@ -34,6 +36,7 @@ from src.preprocess_data import(
 )
 from src.templates import (
     DATA_CHOICES,
+    REGEX,
 )
 
 '''
@@ -349,6 +352,30 @@ def main(**kwargs):
 
     # Test data by the date
     date_results = test_by_date(verbose=True)
+    raise Exception()
+
+    # Look at smote by date stuff
+    filepath = "csv_data"
+    dates = []
+    num_rows = []
+    num_locations = []
+
+    directory = os.path.join(filepath, "smote_by_date")
+    for filename in os.listdir(directory):
+        if re.match(REGEX, filename, re.I):
+            full_path = os.path.join(directory, filename)
+            data = pd.read_csv(full_path).drop_duplicates()
+
+            dates.append(filename.strip(".csv"))
+            num_rows.append(len(data))
+            num_locations.append(len(data["location"].unique()))
+
+    df = pd.DataFrame({
+        "date": dates,
+        "num_rows": num_rows,
+        "num_locations": num_locations
+    })
+    df.to_csv("csv_data/by_date_summary.csv", index=False)   
 
     # Set up paramters
     neighbours = [1, 5, 10, 50, 100, 200, 500]

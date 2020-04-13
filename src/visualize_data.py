@@ -126,6 +126,11 @@ def plot_feature_output_correlation(all_data, save_fig=False):
         annot_kws={"size": 10}
     )
     plt.tight_layout()
+    if save_fig:
+        # If the output directory does not yet exist
+        if not os.path.exists("output_images"):
+            os.makedirs("output_images")
+        plt.savefig("output_images/feature_correlation.png")
     plt.show()
     plt.clf()
     
@@ -147,7 +152,7 @@ def plot_feature_output_correlation(all_data, save_fig=False):
         # If the output directory does not yet exist
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
-        plt.savefig("output_images/feature_correlation.png")
+        plt.savefig("output_images/feature_importance.png")
     plt.show()
     plt.clf()
 

@@ -142,13 +142,14 @@ def smote(data, save_data=False, filename=None, view_plots=True):
         view_data_balance(X, y, data_type="input data")
 
     # Check for severely imbalanced data
+    min_num_samples = 0.04*len(y)
     if len(np.unique(y)) == 1:
         logging.warning("Dataset only has one class, skipping")
         return None
-    elif len(y[y == 0]) < 6:
+    elif len(y[y == 0]) < min_num_samples:
         logging.warning("Dataset is too imbalanced to oversample, skipping")
         return None
-    elif len(y[y == 1]) < 6:
+    elif len(y[y == 1]) < min_num_samples:
         logging.warning("Dataset is too imbalanced to oversample, skipping")
         return None
 
@@ -200,7 +201,7 @@ def main():
     all_data["zika_cases"] = all_data["zika_cases"].apply(cast_to_bool)      
 
     # Oversample using SMOTE by date
-    smote_data_by_date = smote_by_date(all_data, save_data=True)
+    smote_by_date(all_data, save_data=True)
 
     # Oversample using SMOTE on the entire dataset
     smote_data = smote(all_data, save_data=True, filename="all_smote_data")

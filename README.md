@@ -7,6 +7,11 @@ If you haven't already, clone the repo as follows:
 git clone git@github.com:brittanyhewitson/epidemic_prediction.git
 cd epidemic_prediction
 ```
+Or use https:
+```
+git clone https://github.com/brittanyhewitson/epidemic_prediction.git
+cd epidemic_prediction
+```
 
 Next, create an environment. You can use conda as follows:
 ```

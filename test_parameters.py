@@ -2,8 +2,6 @@ import os
 import re
 import sys
 import click
-import copy
-import logging
 
 import numpy as np
 import pandas as pd
@@ -39,17 +37,10 @@ from src.templates import (
     REGEX,
 )
 
-'''
-# Set up logging
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s", 
-    stream=sys.stderr, 
-    level=logging.INFO
-)
-'''
 
 def test_by_date(params=None, verbose=False):
     """
+    Determines the accuracy for each classifier as a function of the date
     """
     # Get the input data
     data_list = get_data(data_choice="by_date")    
@@ -130,6 +121,9 @@ def test_by_date(params=None, verbose=False):
 
 def test_nn_optimizer(data, model_params=None, test_params=None, verbose=False):
     """
+    Tests both the simple classifier and multi-layer perceptron for different optimizers 
+    and learning rates. The number of epochs, batch size, and regularizer are help constant
+    in this test set 
     """
     if not model_params:
         model_params = {
@@ -186,6 +180,9 @@ def test_nn_optimizer(data, model_params=None, test_params=None, verbose=False):
 
 def test_nn_reg(data, model_params=None, test_params=None, verbose=False):
     """
+    Tests both the simple classifier and multi-layer perceptron for different values for
+    l2-norm penalty and including dropout or not. The learning rate, optimizer, number of 
+    epochs, and batch size are held constant in this test set 
     """
     if not model_params:
         model_params = {
@@ -260,6 +257,9 @@ def test_nn_reg(data, model_params=None, test_params=None, verbose=False):
 
 def test_nn_test_params(data, model_params=None, test_params=None, verbose=False):
     """
+    Tests both the simple classifier and multi-layer perceptron for various numbers of
+    epochs and batch sizes. The learning rate, optimizer, l2-norm penalty, and dropout 
+    are held constant in this test set 
     """
     if not model_params:
         model_params = {
@@ -312,6 +312,8 @@ def test_nn_test_params(data, model_params=None, test_params=None, verbose=False
 
 def test_nn_epochs(data, verbose=False):
     """
+    Tests both the simple classifier and multi-layer perceptron for overfitting by
+    running each classifier with 1000 epochs while holding all other parameters constant
     """
     params = {
         "epochs": [1000],
@@ -344,38 +346,13 @@ def test_nn_epochs(data, verbose=False):
 
 @click.command()
 @click.option("--gpu", is_flag=True)
-@click.option("--data_choice", default="small_data", type=click.Choice(DATA_CHOICES))
-@click.option("--show_all_plots", is_flag=True)
+@click.option("--data_choice", default="single_date", type=click.Choice(DATA_CHOICES))
 def main(**kwargs):
     # Set up GPU/CPU
     setup_gpu(kwargs["gpu"])
 
     # Test data by the date
-    date_results = test_by_date(verbose=True)
-    raise Exception()
-
-    # Look at smote by date stuff
-    filepath = "csv_data"
-    dates = []
-    num_rows = []
-    num_locations = []
-
-    directory = os.path.join(filepath, "smote_by_date")
-    for filename in os.listdir(directory):
-        if re.match(REGEX, filename, re.I):
-            full_path = os.path.join(directory, filename)
-            data = pd.read_csv(full_path).drop_duplicates()
-
-            dates.append(filename.strip(".csv"))
-            num_rows.append(len(data))
-            num_locations.append(len(data["location"].unique()))
-
-    df = pd.DataFrame({
-        "date": dates,
-        "num_rows": num_rows,
-        "num_locations": num_locations
-    })
-    df.to_csv("csv_data/by_date_summary.csv", index=False)   
+    date_results = test_by_date(verbose=True)  
 
     # Set up paramters
     neighbours = [1, 5, 10, 50, 100, 200, 500]
@@ -409,8 +386,6 @@ def main(**kwargs):
 
     # Test estimators
     rf_results = test_rf(data, estimators, verbose=True)
-
-    # TODO: Add SVM later for big data and small data?
 
     # KNN    
     plot_knn_bar(knn_results, save_fig=True)

@@ -24,17 +24,10 @@ from src.templates import (
     REGEX,
 )
 
-'''
-# Set up logging
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(message)s", 
-    stream=sys.stderr, 
-    level=logging.INFO
-)
-'''
 
 def get_x_y(all_data, drop_categories=True):
     """
+    Get the X and y arrays from the dataframe to be used by the models
     """
     if drop_categories:
         all_data = all_data.drop(["location", "date"], axis=1)
@@ -47,6 +40,8 @@ def get_x_y(all_data, drop_categories=True):
 
 def get_data(data_choice="small_data"):
     """
+    Read in the appropriate file according to the data choice and produce the X and y
+    arrays to be used by the models
     """
     # Set up the filepath
     if os.getcwd().endswith("src"):
@@ -104,6 +99,8 @@ def get_data(data_choice="small_data"):
             full_path = os.path.join(filepath, "07_feature_engineering_and_cleaning.csv")
         elif data_choice == "smote":
             full_path = os.path.join(filepath, "all_smote_data.csv")
+        elif data_choice == "single_date":
+            full_path = os.path.join(filepath, "smote_by_date", "2016-06-25.csv")
         
         # Read input data
         all_data = pd.read_csv(full_path)
@@ -134,6 +131,7 @@ def get_data(data_choice="small_data"):
 
 def smote(data, save_data=False, filename=None, view_plots=True):
     """
+    Use SMOTE to upsample the minority class
     """
     X, y = get_x_y(data, drop_categories=False)
     
@@ -142,7 +140,7 @@ def smote(data, save_data=False, filename=None, view_plots=True):
         view_data_balance(X, y, data_type="input data")
 
     # Check for severely imbalanced data
-    min_num_samples = 0.04*len(y)
+    min_num_samples = 0.05*len(y)
     if len(np.unique(y)) == 1:
         logging.warning("Dataset only has one class, skipping")
         return None
@@ -180,6 +178,7 @@ def smote(data, save_data=False, filename=None, view_plots=True):
 
 def smote_by_date(all_data, save_data=False):
     """
+    Group the overall data by date and perform SMOTE on each subset
     """
     grouped_by_date = all_data.groupby(by="date")
 

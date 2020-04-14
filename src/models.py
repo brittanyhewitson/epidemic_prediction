@@ -19,6 +19,8 @@ from sklearn.model_selection import cross_val_score
 
 def model_predict(model_name, model, data, **kwargs):
     """
+    Test the trained model by predicting the outputs and compare
+    with the desired outputs
     """
     # TODO: Add timing stuff here
 
@@ -44,6 +46,7 @@ def model_predict(model_name, model, data, **kwargs):
 
 def build_simple_classifier(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, dropout=False):
     """
+    Build a single perceptron 
     """
     # Set up regularization
     if regularizer:
@@ -76,7 +79,7 @@ def build_simple_classifier(X_train, learning_rate=0.001, optimizer="adam", regu
         )
     )
     if dropout:
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.4))
 
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -85,6 +88,7 @@ def build_simple_classifier(X_train, learning_rate=0.001, optimizer="adam", regu
 
 def build_mlp(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, dropout=False):
     """
+    Build a multi-layer perceptron with 2*n hidden nodes in each of the 4 hidden layers
     """
     # Set up nodes
     hidden_nodes = 50
@@ -152,7 +156,7 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, 
 
     # Dropout layer
     if dropout:
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.4))
 
     # Output layer
     model.add(Dense(output_nodes, activation=activation_function, use_bias=False))
@@ -165,6 +169,7 @@ def build_mlp(X_train, learning_rate=0.001, optimizer="adam", regularizer=None, 
 
 def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.01, regularization=None, dropout=False, verbose=False):
     """
+    Test the neural network by iterating through a various number of epochs and batch sizes
     """
     results = []
     for epochs in params["epochs"]:
@@ -194,18 +199,21 @@ def test_nn(model, data, model_name, params, optimizer="adam", learning_rate=0.0
 
 def build_svm(**params):
     """
+    Build an SVM with the default parameters
     """
     return svm.SVC(**params)
 
 
 def build_knn(n=1):
     """
+    Build a k-nearest neighbours classifer with n neighbours
     """
     return KNeighborsClassifier(n_neighbors=n)
 
 
 def test_knn(data, neighbours, verbose=False):
     """
+    Test the k-nearest neighbours classifier by iterating through a variety of neighbours
     """
     results = []
     for n in neighbours:
@@ -225,12 +233,14 @@ def test_knn(data, neighbours, verbose=False):
 
 def build_rf(n=10):
     """
+    Build a random forest with n estimators
     """
     return RandomForestClassifier(n_estimators=n)
 
 
 def test_rf(data, estimators, verbose=False):
     """
+    Test the random forest by iterating through a variety of estimator sizes
     """
     results = []
     for n in estimators:

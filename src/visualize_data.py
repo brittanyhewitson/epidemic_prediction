@@ -47,6 +47,7 @@ def create_hor_bar(df, save_fig=False, title=None):
 # -----------------------------------------------------------------------------
 def plot_imbalance(zika_percent, non_zika_percent, data_type="input data", save_fig=False):
     """
+    Plot the data balance 
     """
     # Create the plot
     plt.bar(["zika", "non-zika"], [zika_percent, non_zika_percent])
@@ -63,6 +64,7 @@ def plot_imbalance(zika_percent, non_zika_percent, data_type="input data", save_
 
 def view_data_balance(X, y, data_type, save_fig=False):
     """
+    Manipulate the data to plot the data balance
     """
     # Find the two classes
     non_zika = y[y == 0]
@@ -112,6 +114,8 @@ def plot_averages(df, save_fig=False):
 
 def plot_feature_output_correlation(all_data, save_fig=False):
     """
+    Plot a heatmap of the correlation coefficient between features, as well 
+    as a bar plot showing the importance of each feature
     """
     all_data["zika_cases"] = all_data["zika_cases"].apply(cast_to_bool)
     
@@ -164,6 +168,8 @@ def plot_feature_output_correlation(all_data, save_fig=False):
 # -----------------------------------------------------------------------------
 def plot_nn_heatmap(results, plot_type="test", save_fig=False):
     """
+    Plot the heatmap of the accuracies for the neural network based on 
+    the desired plot type
     """
     accuracies = list(map(itemgetter("accuracy"), results))
     params = list(map(itemgetter("test_params"), results))
@@ -206,9 +212,6 @@ def plot_nn_heatmap(results, plot_type="test", save_fig=False):
         pivotted, 
         cmap=sns.color_palette("RdBu_r"), 
         square=True, 
-        #annot=True, 
-        #annot_kws={"size": 10}, 
-        #vmin=0.6
         )
     title = results[0]["name"].replace("_", " ")
     plt.title(title)
@@ -218,12 +221,13 @@ def plot_nn_heatmap(results, plot_type="test", save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig(f"output_images/{filename}_heatmap.png")
-    #plt.show()
+    plt.show()
     plt.clf()
 
 
 def plot_history(results, save_fig=False):
     """
+    Plot the training and testing history of the neural network for a large number of epochs
     """
     for result in results:
         history = result["history"]
@@ -242,12 +246,13 @@ def plot_history(results, save_fig=False):
                 os.makedirs("output_images")
             filename = result["name"]
             plt.savefig(f"output_images/{filename}_history.png")
-        #plt.show()
+        plt.show()
         plt.clf()
 
 
 def plot_knn_bar(results, save_fig=False):
     """
+    Create a bar plot showing the accuracies of various n neighbours
     """
     params = list(map(itemgetter("params"), results))
     neighbours = list(map(itemgetter("n_neighbours"), params))
@@ -263,12 +268,13 @@ def plot_knn_bar(results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/knn_bar.png")
-    #plt.show()
+    plt.show()
     plt.clf()
 	
 
 def plot_rf_bar(results, save_fig=False):
     """
+    Create a bar plot showing the accuracies of various n estimators
     """
     params = list(map(itemgetter("params"), results))
     estimators = list(map(itemgetter("n_estimators"), params))
@@ -284,12 +290,13 @@ def plot_rf_bar(results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/rf_bar.png")
-    #plt.show()
+    plt.show()
     plt.clf()	
     
 
 def plot_all_results(all_results, save_fig=False):
     """
+    Plot the best accuracy for each classifier on a bar plot
     """
     best_results = []
     # Sort all results
@@ -311,12 +318,14 @@ def plot_all_results(all_results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/all_classifiers.png")
-    #plt.show()
+    plt.show()
     plt.clf()
 
 
 def plot_accuracy_by_date(dates, results, save_fig=False):
     """
+    Create a line chart for the accuracy of each classifier as a function of
+    the date for the input data used to train the model, all on one graph
     """
     for key, val in results.items():
         plt.plot(dates, val, label=key)
@@ -330,12 +339,14 @@ def plot_accuracy_by_date(dates, results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/accuracy_by_date.png")
-    #plt.show()
+    plt.show()
     plt.clf()
 
 
 def plot_accuracy_by_date_subplot(dates, results, save_fig=False):
     """
+    Create a line chart for the accuracy of each classifier as a function of
+    the date for the input data used to train the model, on separate graphs
     """
     num_plots = len(results)
     fig, axs = plt.subplots(num_plots, sharex=True, sharey=True, figsize=(15,10))
@@ -358,7 +369,7 @@ def plot_accuracy_by_date_subplot(dates, results, save_fig=False):
         if not os.path.exists("output_images"):
             os.makedirs("output_images")
         plt.savefig("output_images/accuracy_by_date.png")
-    #plt.show()
+    plt.show()
     plt.clf()
 
 

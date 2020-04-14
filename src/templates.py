@@ -1,5 +1,5 @@
 # Set the random seed for splitting data
-RANDOM_SEED = 123
+RANDOM_SEED = 42
 
 REGEX = r"^\d+-\d+-\d+.csv$"
 
@@ -7,7 +7,8 @@ DATA_CHOICES = [
     "big_data",
     "small_data",
     "smote",
-    "by_date"
+    "by_date",
+    "single_date",
 ]
 
 ZIKA_DATAFIELD_TO_KEEP = [

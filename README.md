@@ -38,8 +38,8 @@ python3 test_parameters.py --gpu --data_choice small_data
 Where the `--gpu` flag indicates whether you wish to use a GPU and the `--data_choice` option specifies which data source to train on. The choices for data source are:
 | Data Source | Description | Size |
 | ----------- | ----------- | ---- |
-| `big_data` | The complete raw input dataset. This file is large and imbalanced, therefore it will take several hours to train and will produce results of approximately 87% regardless of the parameters| |
-| `small_data` | The small input dataset provided by the example article. This dataset is found in the `X.pkl` and `y.pkl` files and is relatively small compared to the large dataset. Therefore it will take approximately 5 minutes to run and should produce accuracies in the range of 80-95%| |
+| `big_data` | The complete raw input dataset. This file is large and imbalanced, therefore it will take several hours to train and will produce results of approximately 87% regardless of the parameters| 116109 rows |
+| `small_data` | The small input dataset provided by the example article. This dataset is found in the `X.pkl` and `y.pkl` files and is relatively small compared to the large dataset. Therefore it will take approximately 5 minutes to run and should produce accuracies in the range of 80-95%| 1213 rows |
 | `smote` | The complete input dataset upsampled using SMOTE. This dataset includes all rows from the input dataset, therefore holds data for all dates for all locations | 201948 rows |
 | `by_date` | A number of CSV files, each representing the feature and output data for all locations on a single date. Only to be used to find the accuracy as a function of the date | 26 CSV files |
 | `single_date` | Uses only a single CSV file from the list of CSV files in the `by_date` category | Size depends on which date is selected, varies from approximately 1000-2000 rows per file |
